@@ -112,6 +112,9 @@ h1{
 .tools .tx{display:flex;flex-direction:column;line-height:1.2;}
 .tools .tx .a{font-size:13px;font-weight:600;}
 .tools .tx .b{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em;margin-top:2px;}
+.corner{flex:0 0 auto;display:flex;flex-direction:column;gap:10px;align-items:stretch;}
+.tools.classesbtn:hover{border-color:rgba(232,176,75,.45);}
+.tools.classesbtn .ic i{background:var(--amber);}
 
 /* ---------- Main ---------- */
 main{flex:0 0 auto;display:flex;flex-direction:column;gap:clamp(14px,2.2vh,26px);min-height:0;}
@@ -146,15 +149,11 @@ a.pcard:hover{transform:translateY(-5px);border-color:var(--edge);background:rgb
 .pcard.todo .pname{color:var(--muted);font-weight:500;}
 .pbody .pstudent{font-size:11.5px;color:var(--muted);font-style:italic;line-height:1.3;margin-top:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-/* Lead card: instructor's live project — full width, horizontal, full title shown */
-.pcard.lead{grid-column:1/-1;flex-direction:row;align-items:stretch;border-color:var(--edge);
-  background:linear-gradient(120deg,rgba(142,160,232,.10),rgba(255,255,255,.03));}
-.pcard.lead .thumb{height:auto;width:clamp(96px,16%,168px);border-bottom:none;border-right:1px solid var(--card-bd);}
-.pcard.lead .pname{white-space:normal;color:var(--ink);font-weight:700;}
 
 /* ===== SECONDARY: classes ===== */
-.classes{--accent:var(--amber);--edge:rgba(232,176,75,.42);}
-.classes .phead h2{font-size:clamp(15px,1.55vw,20px);color:var(--accent);}
+.classes-sheet{--accent:var(--amber);--edge:rgba(232,176,75,.42);}
+.classes-sheet .sessions{flex-direction:column;}
+.classes-sheet .scard{max-width:none;width:100%;}
 .sessions{list-style:none;display:flex;flex-wrap:wrap;gap:10px;}
 .scard{
   position:relative;display:flex;align-items:center;gap:12px;
@@ -251,38 +250,21 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
       <p class="lead" data-anim>A hands-on pilot using frontier AI as a power tool for real research,
         under engineering discipline.</p>
     </div>
-    <button class="tools" id="toolsBtn" data-anim aria-haspopup="dialog" aria-controls="toolsModal">
-      <span class="ic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span class="tx"><span class="a">Tools &amp; links</span><span class="b">Parley · Pi · nono · org</span></span>
-    </button>
+    <div class="corner" data-anim>
+      <button class="tools" id="toolsBtn" aria-haspopup="dialog" aria-controls="toolsModal">
+        <span class="ic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="tx"><span class="a">Tools &amp; links</span><span class="b">Parley · Pi · nono · org</span></span>
+      </button>
+      <button class="tools classesbtn" id="classesBtn" aria-haspopup="dialog" aria-controls="classesModal">
+        <span class="ic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="tx"><span class="a">Classes</span><span class="b">presentations &amp; notes</span></span>
+      </button>
+    </div>
   </header>
 
   <main>
 
-    <!-- ============ CLASSES ============ -->
-    <section class="classes" data-anim>
-      <div class="phead"><h2>Classes</h2><span class="hint">click a session to open its presentation</span></div>
-      <ul class="sessions" id="sessions">
-
-        <li>
-          <div class="scard">
-            <a class="stretch" href="session-1/lesson1.html" aria-label="Open Session 01 presentation"></a>
-            <span class="tag">01</span>
-            <span class="smeta">
-              <span class="sname">Agentic AI for Engineering Research</span>
-              <span class="sdesc">Norms, fundamentals &amp; the first assignment</span>
-            </span>
-            <a class="snotes" href="session-1/session-1-plan.md">notes</a>
-            <span class="arr">→</span>
-          </div>
-        </li>
-
-        <!-- Add the next session by copying one <li> block and pointing it at session-2/… -->
-
-      </ul>
-    </section>
-
-    <!-- ============ STUDENT PROJECTS (prominent) ============ -->
+    <!-- ============ STUDENT PROJECTS — Classes now live in the top-right "Classes" modal ============ -->
     <section class="people" data-anim>
       <div class="phead"><h2>Student projects</h2><span class="hint">portfolios go live through the term</span></div>
       <div class="pgrid" id="pgrid">
@@ -296,11 +278,6 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
           </div>
         </a>
         -->
-
-        <article class="pcard lead">
-          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot of the package</small></span></div>
-          <div class="pbody"><span class="ptag">PI</span><span class="pmeta"><span class="pname">PowerCycles.jl — robust and fast propulsion system design and optimization</span><span class="pstudent">Prashanth Prakash</span></span></div>
-        </article>
 
         <article class="pcard todo">
           <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
@@ -325,6 +302,10 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
         <article class="pcard todo">
           <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
           <div class="pbody"><span class="ptag">06</span><span class="pmeta"><span class="pname">Awaiting portfolio</span><span class="pstudent">Mina Cezairli</span></span></div>
+        </article>
+        <article class="pcard">
+          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot of the package</small></span></div>
+          <div class="pbody"><span class="ptag">07</span><span class="pmeta"><span class="pname" title="PowerCycles.jl — robust and fast propulsion system design and optimization">PowerCycles.jl — robust and fast propulsion system design and optimization</span><span class="pstudent">Prashanth Prakash</span></span></div>
         </article>
 
       </div>
@@ -367,19 +348,57 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
   </div>
 </div>
 
+<!-- ============ MODAL: classes (sessions + notes) ============ -->
+<div class="modal" id="classesModal" role="dialog" aria-modal="true" aria-labelledby="classesTitle">
+  <div class="sheet classes-sheet">
+    <div class="shead">
+      <div>
+        <h3 id="classesTitle">Classes</h3>
+        <div class="sub">presentations &amp; notes — growing through the term</div>
+      </div>
+      <button class="xbtn" id="classesClose" aria-label="Close">✕</button>
+    </div>
+    <ul class="sessions" id="sessions">
+
+      <li>
+        <div class="scard">
+          <a class="stretch" href="session-1/lesson1.html" aria-label="Open Session 01 presentation"></a>
+          <span class="tag">01</span>
+          <span class="smeta">
+            <span class="sname">Agentic AI for Engineering Research</span>
+            <span class="sdesc">Norms, fundamentals &amp; the first assignment</span>
+          </span>
+          <a class="snotes" href="session-1/session-1-plan.md">notes</a>
+          <span class="arr">→</span>
+        </div>
+      </li>
+
+      <!-- Add the next session by copying one <li> block and pointing it at session-2/… -->
+
+    </ul>
+  </div>
+</div>
+
 <script>
 (function(){
   // Reveal on load.
   requestAnimationFrame(()=>document.body.classList.add('ready'));
 
-  // ---- Tools modal ----
-  const modal = document.getElementById('toolsModal');
-  const open  = ()=>{ modal.classList.add('show'); document.getElementById('toolsClose').focus(); };
-  const close = ()=> modal.classList.remove('show');
-  document.getElementById('toolsBtn').addEventListener('click', open);
-  document.getElementById('toolsClose').addEventListener('click', close);
-  modal.addEventListener('click', e=>{ if(e.target === modal) close(); });   // backdrop
-  addEventListener('keydown', e=>{ if(e.key === 'Escape' && modal.classList.contains('show')) close(); });
+  // ---- Modals (tools + classes) ----
+  function wireModal(btnId, modalId, closeId){
+    const modal = document.getElementById(modalId);
+    const btn = document.getElementById(btnId);
+    const closeBtn = document.getElementById(closeId);
+    if(!modal || !btn || !closeBtn) return;
+    const open  = ()=>{ modal.classList.add('show'); closeBtn.focus(); };
+    const close = ()=> modal.classList.remove('show');
+    btn.addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', e=>{ if(e.target === modal) close(); });   // backdrop
+    addEventListener('keydown', e=>{ if(e.key === 'Escape' && modal.classList.contains('show')) close(); });
+  }
+  wireModal('toolsBtn','toolsModal','toolsClose');
+  wireModal('classesBtn','classesModal','classesClose');
 
   // ---- Pointer-reactive background parallax (vars on :root so the orbit + nudge compose) ----
   const root = document.documentElement;
