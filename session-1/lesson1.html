@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agentic AI for Engineering Research — Session 1</title>
+
+<!-- Fonts load from Google Fonts when online; falls back gracefully offline. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-0:#080b12;
+  --ink:#eef1f7;
+  --muted:#9aa6bb;
+  --faint:#586173;
+  --line:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.035);
+  --card-bd:rgba(255,255,255,.09);
+  --amber:#e8b04b;
+  --teal:#5fd2c2;
+  --indigo:#8ea0e8;
+  --rose:#d98aa8;
+  --display:"Bricolage Grotesque","Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --pad: clamp(28px, 6vw, 96px);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--body);
+  background:var(--bg-0);
+  color:var(--ink);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ---------- Living background ---------- */
+.bg-wrap{position:fixed;inset:0;z-index:-3;animation:hue 20s ease-in-out infinite alternate;}
+.bg{
+  position:fixed;inset:-32%;z-index:-3;
+  background:
+    radial-gradient(46% 58% at 22% 26%, rgba(72,92,168,.42), transparent 70%),
+    radial-gradient(52% 54% at 80% 74%, rgba(26,118,118,.34), transparent 72%),
+    radial-gradient(40% 48% at 62% 14%, rgba(122,74,140,.22), transparent 70%),
+    radial-gradient(60% 60% at 50% 110%, rgba(40,52,92,.40), transparent 70%),
+    var(--bg-0);
+  animation:drift 9s ease-in-out infinite alternate;
+  will-change:transform;
+}
+@keyframes drift{
+  0%  {transform:translate3d(-6%,-4%,0) scale(1.08);}
+  50% {transform:translate3d(6%,5%,0)   scale(1.20);}
+  100%{transform:translate3d(-3%,3%,0)  scale(1.10);}
+}
+@keyframes hue{ from{filter:hue-rotate(-22deg) saturate(.95);} to{filter:hue-rotate(30deg) saturate(1);} }
+
+/* fine grain texture */
+.grain{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* subtle vignette for projector legibility */
+.vignette{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,.45) 100%);}
+
+/* ---------- Deck ---------- */
+.deck{position:fixed;inset:0;}
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:var(--pad);
+  opacity:0;visibility:hidden;
+  transform:scale(.992);
+  transition:opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1), visibility 0s linear .55s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1);}
+
+/* staggered entrance */
+[data-anim]{opacity:0;transform:translateY(20px);transition:opacity .6s ease, transform .7s cubic-bezier(.2,.75,.2,1);}
+.slide.active [data-anim]{opacity:1;transform:none;}
+.slide.active [data-anim]:nth-child(1){transition-delay:.06s}
+.slide.active [data-anim]:nth-child(2){transition-delay:.14s}
+.slide.active [data-anim]:nth-child(3){transition-delay:.22s}
+.slide.active [data-anim]:nth-child(4){transition-delay:.30s}
+.slide.active [data-anim]:nth-child(5){transition-delay:.38s}
+.slide.active [data-anim]:nth-child(6){transition-delay:.46s}
+.slide.active [data-anim]:nth-child(7){transition-delay:.54s}
+.slide.active [data-anim]:nth-child(8){transition-delay:.62s}
+
+/* ---------- Typography ---------- */
+.eyebrow{
+  font-family:var(--mono);font-size:clamp(11px,1.05vw,14px);
+  letter-spacing:.28em;text-transform:uppercase;color:var(--amber);
+  display:flex;align-items:center;gap:14px;margin-bottom:26px;
+}
+.eyebrow::before{content:"";width:42px;height:1px;background:var(--amber);opacity:.7;display:inline-block;}
+h1{font-family:var(--display);font-weight:800;line-height:1.02;letter-spacing:-.02em;
+   font-size:clamp(40px,7.4vw,104px);}
+h2{font-family:var(--display);font-weight:700;line-height:1.05;letter-spacing:-.015em;
+   font-size:clamp(30px,4.7vw,64px);}
+.lead{font-size:clamp(17px,1.9vw,27px);line-height:1.5;color:var(--ink);max-width:24ch;}
+p.body{font-size:clamp(15px,1.45vw,21px);line-height:1.6;color:var(--muted);max-width:60ch;margin-top:18px;}
+.accent{color:var(--amber)}
+.tealtxt{color:var(--teal)}
+.quote{font-family:var(--display);font-weight:600;font-size:clamp(26px,4vw,52px);
+  line-height:1.12;letter-spacing:-.01em;max-width:18ch;}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;}
+
+/* ---------- Layout helpers ---------- */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(22px,3.4vw,56px);align-items:start;margin-top:34px;}
+.col h3{font-family:var(--display);font-size:clamp(18px,1.9vw,26px);font-weight:700;margin-bottom:14px;}
+.col.is  h3{color:var(--teal)}
+.col.isnt h3{color:var(--rose)}
+ul.clean{list-style:none;display:flex;flex-direction:column;gap:13px;}
+ul.clean li{position:relative;padding-left:26px;font-size:clamp(15px,1.45vw,20px);line-height:1.45;color:var(--ink);}
+ul.clean li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:9px;border-radius:2px;
+  background:var(--amber);transform:rotate(45deg);}
+ul.clean.isnt li::before{background:var(--rose);opacity:.85}
+ul.clean.is li::before{background:var(--teal)}
+
+/* ---------- Split layout: point squished left, examples on the right ---------- */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,72px);align-items:center;width:100%;}
+.split-lead{align-self:center;}
+.split-lead .eyebrow{margin-bottom:20px;}
+.split-lead h2{max-width:15ch;}
+.split-lead .body{max-width:30ch;}
+.split-body{display:flex;flex-direction:column;gap:16px;}
+.split-body .body{margin-top:0;max-width:48ch;}
+.split-body .pillrow{margin-top:0;max-width:none;}
+@media (max-width:760px){.split{grid-template-columns:1fr;gap:24px}}
+
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px;}
+.card{
+  background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
+  padding:22px 22px 24px;backdrop-filter:blur(6px);
+  transition:transform .35s ease, border-color .35s ease, background .35s ease;
+}
+.card:hover{transform:translateY(-4px);border-color:rgba(232,176,75,.45);background:rgba(255,255,255,.06);}
+.card .n{font-family:var(--mono);font-size:13px;color:var(--amber);letter-spacing:.1em;}
+.card h4{font-family:var(--display);font-size:clamp(17px,1.7vw,23px);font-weight:700;margin:8px 0 10px;}
+.card p{font-size:clamp(13px,1.25vw,16px);line-height:1.5;color:var(--muted);}
+
+.pillrow{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px;max-width:60ch;}
+.pill{font-family:var(--mono);font-size:clamp(12px,1.15vw,15px);
+  border:1px solid var(--card-bd);background:var(--card);border-radius:999px;
+  padding:10px 16px;color:var(--ink);transition:.3s;}
+.pill:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ---------- Title slide ---------- */
+#s-title{justify-content:center;}
+.titledate{position:absolute;top:var(--pad);right:var(--pad);font-family:var(--mono);
+  font-size:clamp(11px,1vw,13px);letter-spacing:.22em;text-transform:uppercase;color:var(--faint);}
+.brandline{display:flex;gap:14px;align-items:center;font-family:var(--mono);
+  font-size:13px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-top:30px;}
+.brandline .dot{width:5px;height:5px;border-radius:50%;background:var(--teal);}
+
+/* ---------- Section divider ---------- */
+.divider h2{font-size:clamp(38px,6.4vw,92px);}
+.divider .num{font-family:var(--mono);color:var(--amber);font-size:clamp(13px,1.3vw,16px);letter-spacing:.3em;}
+
+/* ---------- Interactive: next-token toy ---------- */
+.toy{margin-top:30px;max-width:760px;}
+.toy .stem{font-family:var(--mono);font-size:clamp(15px,1.6vw,22px);line-height:1.6;
+  background:rgba(0,0,0,.28);border:1px solid var(--card-bd);border-radius:12px;padding:18px 20px;}
+.toy .stem .slot{color:var(--amber);border-bottom:2px dashed rgba(232,176,75,.5);padding:0 6px;}
+.toks{display:flex;flex-direction:column;gap:10px;margin-top:18px;}
+.tok{display:grid;grid-template-columns:130px 1fr 56px;align-items:center;gap:14px;}
+.tok .name{font-family:var(--mono);font-size:14px;color:var(--ink);}
+.tok .barwrap{height:12px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;}
+.tok .bar{height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--teal),var(--indigo));transition:width 1s cubic-bezier(.2,.7,.2,1);}
+.tok .pct{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right;}
+.tok.picked .name{color:var(--amber)}
+.tok.picked .bar{background:linear-gradient(90deg,var(--amber),#f4d28a);box-shadow:0 0 18px rgba(232,176,75,.5);}
+.toynote{margin-top:16px;color:var(--faint);font-size:14px;min-height:20px;font-family:var(--mono);}
+
+/* ---------- Interactive: agent loop ---------- */
+.loop{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:40px;}
+.node{position:relative;min-width:140px;text-align:center;padding:20px 18px;border-radius:16px;
+  border:1px solid var(--card-bd);background:var(--card);transition:.4s;}
+.node .lbl{font-family:var(--display);font-weight:700;font-size:clamp(16px,1.7vw,22px);}
+.node .sub{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;margin-top:6px;text-transform:uppercase;}
+.node.on{border-color:var(--amber);background:rgba(232,176,75,.12);
+  box-shadow:0 0 30px rgba(232,176,75,.22);transform:translateY(-4px) scale(1.03);}
+.node.on .lbl{color:var(--amber)}
+.arrow{font-family:var(--mono);color:var(--faint);font-size:22px;}
+.loopback{font-family:var(--mono);color:var(--teal);font-size:13px;letter-spacing:.1em;margin-top:22px;text-align:center;}
+.loopback .rot{display:inline-block;animation:spin 4.5s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- Interactive: smoke vs property ---------- */
+.codecard{margin-top:26px;display:grid;grid-template-columns:1.15fr .85fr;gap:24px;align-items:start;}
+@media (max-width:880px){.codecard{grid-template-columns:1fr}}
+pre.code{font-family:var(--mono);font-size:clamp(12px,1.2vw,16px);line-height:1.7;
+  background:rgba(0,0,0,.34);border:1px solid var(--card-bd);border-radius:14px;padding:20px 22px;overflow:auto;}
+pre.code .cm{color:var(--faint)}
+pre.code .kw{color:var(--indigo)}
+pre.code .fn{color:var(--teal)}
+pre.code .st{color:var(--amber)}
+.testpanel{display:flex;flex-direction:column;gap:14px;}
+.btnrow{display:flex;gap:12px;flex-wrap:wrap;}
+.tbtn{font-family:var(--mono);font-size:14px;border-radius:10px;padding:12px 16px;cursor:pointer;
+  border:1px solid var(--card-bd);background:var(--card);color:var(--ink);transition:.25s;}
+.tbtn:hover{border-color:var(--amber);color:var(--amber)}
+.result{font-family:var(--mono);font-size:14px;line-height:1.55;border-radius:12px;padding:16px 18px;
+  border:1px solid var(--card-bd);min-height:54px;transition:.3s;background:rgba(0,0,0,.22);}
+.result.pass{border-color:rgba(95,210,194,.5);color:var(--teal);background:rgba(95,210,194,.07)}
+.result.fail{border-color:rgba(217,138,168,.55);color:var(--rose);background:rgba(217,138,168,.08)}
+
+/* ---------- Assignment centerpiece ---------- */
+.cta{border:1px solid rgba(232,176,75,.4);background:linear-gradient(180deg,rgba(232,176,75,.08),rgba(255,255,255,.02));
+  border-radius:20px;padding:clamp(24px,3vw,40px);margin-top:30px;max-width:900px;}
+.cta .due{font-family:var(--mono);font-size:14px;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;}
+.cta h3{font-family:var(--display);font-weight:800;font-size:clamp(24px,3vw,40px);margin:10px 0 16px;}
+.checklist{display:flex;flex-direction:column;gap:12px;margin-top:8px;}
+.checklist li{list-style:none;display:flex;gap:14px;align-items:flex-start;font-size:clamp(15px,1.4vw,19px);color:var(--ink);}
+.checklist li .bx{flex:0 0 auto;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--amber);
+  display:grid;place-items:center;color:var(--amber);font-size:12px;margin-top:3px;}
+
+/* ---------- Recap ---------- */
+.recap{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px;}
+.recap .r{border-left:2px solid var(--amber);padding:6px 0 6px 18px;}
+.recap .r .t{font-family:var(--display);font-weight:700;font-size:clamp(18px,2vw,26px);}
+.recap .r .d{color:var(--muted);font-size:clamp(14px,1.3vw,17px);margin-top:8px;line-height:1.5}
+
+/* ---------- Chrome: progress, counter, hint, nav, notes ---------- */
+.progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--amber),var(--teal));
+  z-index:50;width:0;transition:width .5s cubic-bezier(.2,.7,.2,1);box-shadow:0 0 12px rgba(232,176,75,.5);}
+.counter{position:fixed;bottom:22px;right:26px;z-index:50;font-family:var(--mono);font-size:13px;color:var(--muted);
+  letter-spacing:.15em;}
+.counter b{color:var(--ink);font-weight:500}
+.hint{position:fixed;bottom:22px;left:26px;z-index:50;font-family:var(--mono);font-size:12px;color:var(--faint);
+  letter-spacing:.1em;display:flex;gap:8px;align-items:center;}
+.key{border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--muted);}
+.nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:10px;}
+.nav button{width:42px;height:42px;border-radius:50%;border:1px solid var(--card-bd);background:rgba(0,0,0,.3);
+  color:var(--ink);font-size:18px;cursor:pointer;transition:.25s;backdrop-filter:blur(6px);}
+.nav button:hover{border-color:var(--amber);color:var(--amber);transform:translateY(-2px)}
+
+.notes{position:fixed;left:0;right:0;bottom:0;z-index:60;transform:translateY(105%);
+  transition:transform .4s cubic-bezier(.2,.7,.2,1);
+  background:rgba(8,11,18,.96);border-top:1px solid var(--card-bd);
+  padding:20px clamp(24px,5vw,60px);backdrop-filter:blur(10px);max-height:42vh;overflow:auto;}
+.notes.open{transform:none;}
+.notes .ttl{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase;margin-bottom:10px;}
+.notes .txt{font-size:clamp(14px,1.4vw,18px);line-height:1.6;color:var(--ink);max-width:90ch;}
+
+/* ---------- Norm hero slides (statement only) ---------- */
+.slide.norm{justify-content:center;}
+.norm .eyebrow{margin-bottom:34px;}
+.norm .quote{font-size:clamp(40px,8vw,108px);max-width:15ch;font-weight:700;line-height:1.04;}
+.nobody{display:inline-block;margin-top:0;font-size:.44em;color:var(--amber);font-weight:700;font-style:italic;letter-spacing:-.005em;
+  opacity:0;transform:translateY(8px);transition:opacity 1.2s ease, transform 1.2s cubic-bezier(.2,.75,.2,1);}
+.slide.active .nobody{opacity:1;transform:none;transition-delay:.5s;}
+.split-quote{font-size:clamp(30px,4.6vw,62px);line-height:1.06;max-width:13ch;font-weight:700;}
+
+/* ---------- Video insert (the making-of clip) ---------- */
+.vidcard{width:100%;max-width:680px;}
+/* no card chrome — the clip runs flush to the terminal's own edges */
+.vidcard video{display:block;width:100%;height:auto;border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.45);}
+.vidcard figcaption{font-family:var(--mono);font-size:12px;color:var(--faint);
+  padding:10px 2px 0;line-height:1.45;}
+
+/* ---------- Anchored norm: statement morphs to the left, RHS cycles ---------- */
+.normseq{justify-content:center;}
+.nq{position:relative;width:100%;display:grid;align-items:center;
+  grid-template-columns:1fr;column-gap:clamp(28px,4vw,60px);}
+.normseq:not([data-step="0"]) .nq{grid-template-columns:minmax(0,34%) 1fr;}
+
+.nq-left{align-self:center;}
+/* step-0 hero is laid out exactly like the Norm 1 hero: left-aligned, vertically centered */
+.normseq[data-step="0"] .nq-left{text-align:left;}
+
+.nq-eyebrow{display:inline-flex;justify-content:flex-start;}
+.normseq[data-step="0"] .nq-eyebrow{margin-bottom:34px;}
+.normseq:not([data-step="0"]) .nq-eyebrow{margin-bottom:18px;}
+
+.nq-title{font-family:var(--display);font-weight:700;letter-spacing:-.01em;line-height:1.04;
+  transform-origin:top left;}
+/* each word morphs on its own so the 3-line↔4-line reflow animates instead of snapping */
+.nq-title .w{display:inline-block;}
+.normseq[data-step="0"] .nq-title{font-size:clamp(40px,8vw,108px);max-width:15ch;}
+.normseq:not([data-step="0"]) .nq-title{font-size:clamp(28px,4.2vw,56px);max-width:13ch;}
+
+.nq-dots{display:flex;gap:9px;margin-top:30px;opacity:0;transition:opacity .5s ease .25s;}
+.normseq[data-step="0"] .nq-dots{display:none;}
+.normseq:not([data-step="0"]) .nq-dots{opacity:1;}
+.nq-dots i{width:8px;height:8px;border-radius:50%;background:var(--faint);transition:.3s;}
+.nq-dots i.on{background:var(--amber);box-shadow:0 0 12px rgba(232,176,75,.6);transform:scale(1.15);}
+
+/* thin vertical divider at ~1/3 width, partial height */
+.nq-divider{position:absolute;left:34%;top:50%;transform:translateY(-50%);
+  width:1px;height:48%;opacity:0;transition:opacity .55s ease .1s;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,.22) 16%,rgba(255,255,255,.22) 84%,transparent);}
+.normseq:not([data-step="0"]) .nq-divider{opacity:1;}
+
+/* right column: panels stacked, cross-fading in place */
+.nq-right{position:relative;min-height:62vh;}
+.normseq[data-step="0"] .nq-right{display:none;}
+.nq-panel{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+  opacity:0;visibility:hidden;transform:translateY(12px);
+  transition:opacity .45s ease, transform .55s cubic-bezier(.2,.7,.2,1), visibility 0s linear .45s;}
+.nq-panel.on{opacity:1;visibility:visible;transform:none;
+  transition:opacity .45s ease, transform .55s cubic-bezier(.2,.7,.2,1);}
+.nq-panel .eyebrow{margin-bottom:16px;}
+.nq-h{font-family:var(--display);font-weight:700;font-size:clamp(22px,2.6vw,36px);line-height:1.12;letter-spacing:-.01em;}
+.nq-panel .codecard{margin-top:18px;}
+.nq-panel pre.code{font-size:clamp(11px,1vw,13px);line-height:1.6;padding:16px 18px;}
+/* largest that fits while keeping the native 1440x884 ratio — no crop.
+   max-width is height-derived (76vh wide -> ~47vh tall) so the frame never overflows */
+.nq-panel .vidcard{margin-top:14px;width:100%;max-width:min(100%,76vh);}
+@media (max-width:760px){
+  .normseq:not([data-step="0"]) .nq{grid-template-columns:1fr;}
+  .nq-divider{display:none;}
+  .nq-right{min-height:auto;}
+  .nq-panel{position:relative;}
+  .nq-panel:not(.on){display:none;}
+}
+
+/* nonsense tokens barely register */
+.tok.noise .name{color:var(--faint);font-style:italic;}
+
+/* ---------- Diagnostic quiz slide ---------- */
+.quizwrap{display:flex;gap:clamp(28px,5vw,64px);align-items:center;flex-wrap:wrap;margin-top:38px;}
+.qr{width:210px;height:210px;flex:0 0 auto;border:2px dashed var(--card-bd);border-radius:20px;
+  display:grid;place-items:center;color:var(--faint);font-family:var(--mono);letter-spacing:.25em;font-size:13px;
+  background:
+    linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,.02)),
+    repeating-linear-gradient(0deg,transparent 0 14px,rgba(255,255,255,.03) 14px 16px),
+    repeating-linear-gradient(90deg,transparent 0 14px,rgba(255,255,255,.03) 14px 16px);}
+.qrside{max-width:48ch;}
+.quizlink{display:inline-block;margin-top:18px;font-family:var(--mono);font-size:clamp(13px,1.3vw,16px);
+  color:var(--amber);text-decoration:none;border:1px solid rgba(232,176,75,.4);border-radius:10px;padding:11px 18px;transition:.25s;}
+.quizlink:hover{background:rgba(232,176,75,.1);}
+
+@media (max-width:760px){
+  .two,.cards,.recap{grid-template-columns:1fr}
+  .codecard{grid-template-columns:1fr}
+  .nav{bottom:64px}
+}
+@media (prefers-reduced-motion:reduce){
+  .bg,.bg-wrap{animation:none}
+  [data-anim]{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-wrap"><div class="bg"></div></div>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<div class="progress" id="progress"></div>
+
+<main class="deck" id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide" id="s-title" data-notes="Welcome. One sentence on what this pilot is: we use frontier AI as a power tool for real engineering-research outputs — your own proposed projects. Set a warm, collaborative tone from second one.">
+    <div class="eyebrow" data-anim>Summer Pilot · Session 1</div>
+    <h1 data-anim>Agentic AI<br>for Engineering<br>Research</h1>
+    <p class="body" data-anim>Leveraging frontier AI tools to produce real research and wield them with engineering discipline.</p>
+    <div class="brandline" data-anim>
+      <span>Prashanth</span><span class="dot"></span>
+      <span>MIT</span><span class="dot"></span>
+      <span>Day 1</span>
+    </div>
+    <div class="titledate" data-anim>June 4, 2026</div>
+  </section>
+
+  <!-- 2 — WHAT THIS IS / ISN'T -->
+  <section class="slide" data-notes="Frame the boundaries. We do not study how the model was trained; we study how to use it well. The durable payoff is engineering practice that happens to be supercharged — not disposable prompt tricks.">
+    <div class="eyebrow" data-anim>The premise</div>
+    <h2 data-anim>What this course is — <span class="accent">and isn't</span></h2>
+    <div class="two">
+      <div class="col is" data-anim>
+        <h3>It is</h3>
+        <ul class="clean is">
+          <li>Using AI as a power tool for real research outputs</li>
+          <li>Built around <em>your own</em> proposed projects</li>
+          <li>Durable software-engineering practice, supercharged</li>
+        </ul>
+      </div>
+      <div class="col isnt" data-anim>
+        <h3>It isn't</h3>
+        <ul class="clean isnt">
+          <li>A class on training or building frontier LLMs</li>
+          <li>A bag of disposable prompt tricks</li>
+          <li>A replacement for thinking like an engineer</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 — NORM 1 · anchored statement, RHS = your job on the shared frontier -->
+  <section class="slide normseq" data-step="0" data-notes="The most important reframe of the day. The field is moving so fast that nobody can really be an expert yet — me least of all, and I want to be honest about that. The statement lands big, then morphs left while the right spells out the consequence for them: bring what you find to class, share it, you'll often discover things before I do. A shared frontier only moves if they push it.">
+    <div class="nq">
+      <div class="nq-left">
+        <div class="eyebrow nq-eyebrow">Norm 1 of 3</div>
+        <div class="nq-title">It's moving too fast<br>for <span class="accent">experts</span>.<br><span class="nobody">...and I'm certainly not one.</span></div>
+      </div>
+      <div class="nq-divider"></div>
+      <div class="nq-right">
+        <div class="nq-panel" data-panel="1">
+          <div class="eyebrow">What that means for you</div>
+          <ul class="clean is">
+            <li><strong>Bring new things to class</strong> — share what you're finding.</li>
+            <li>You'll often <strong>find stuff faster than I do</strong>.</li>
+            <li>So be proactive — a shared frontier only moves if you push it.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — NORM 2 · anchored statement, cycling evidence on the right -->
+  <section class="slide normseq" data-step="0" data-notes="Norm 2 — tool, not crutch. Land the statement big; it then morphs to the left and stays pinned while the right side cycles. (1) What it means: AI amplifies your judgment, never replaces fundamentals; plausible ≠ correct; stop verifying and it's a liability. (2) The live demo: smoke test passes, property test fails — same numbers reordered give different answers; it never sorted. (3) The durable spine: the practices this summer actually teaches — the skills AI doesn't obsolete.">
+    <div class="nq">
+      <div class="nq-left">
+        <div class="eyebrow nq-eyebrow">Norm 2 of 3</div>
+        <div class="nq-title">A <span class="accent">tool</span>,<br>not a <span class="tealtxt">crutch</span>.</div>
+        <div class="nq-dots"><i></i><i></i><i></i></div>
+      </div>
+      <div class="nq-divider"></div>
+      <div class="nq-right">
+
+        <!-- 1 · what it means -->
+        <div class="nq-panel" data-panel="1">
+          <div class="eyebrow">What it means</div>
+          <ul class="clean is">
+            <li>AI <strong>amplifies your engineering judgment</strong> — it never replaces your fundamentals.</li>
+            <li><strong>Plausible is not the same as correct</strong> — you're about to see exactly that.</li>
+            <li>The moment you stop verifying, the tool quietly becomes a <strong>liability</strong>.</li>
+          </ul>
+        </div>
+
+        <!-- 2 · the live demo -->
+        <div class="nq-panel" data-panel="2">
+          <div class="eyebrow">Plausible ≠ correct</div>
+          <h3 class="nq-h">The AI wrote this. <span class="accent">Is it right?</span></h3>
+          <div class="codecard">
+            <pre class="code"><span class="kw">def</span> <span class="fn">median</span>(xs):
+    n = <span class="fn">len</span>(xs)
+    <span class="kw">return</span> xs[n // 2]   <span class="cm"># the middle one… right?</span></pre>
+            <div class="testpanel no-advance">
+              <div class="btnrow">
+                <button class="tbtn" id="btnSmoke">▶ run smoke test</button>
+                <button class="tbtn" id="btnProp">▶ run property test</button>
+              </div>
+              <div class="result" id="testOut">No tests run yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 · the durable spine -->
+        <div class="nq-panel" data-panel="3">
+          <div class="eyebrow">The durable spine — <em>coming this summer</em> ☀️</div>
+          <h3 class="nq-h">What AI <span class="accent">doesn't</span> obsolete</h3>
+          <p class="body" style="margin-top:10px;max-width:48ch">These are practices we'll learn — how you stay the architect of work an agent generates.</p>
+          <div class="pillrow" style="margin-top:18px;max-width:none">
+            <span class="pill">Test-driven development</span>
+            <span class="pill">Property-based testing</span>
+            <span class="pill">Evaluation suites</span>
+            <span class="pill">Dependency management</span>
+            <span class="pill">Architecture &amp; modularity</span>
+            <span class="pill">Cost management</span>
+            <span class="pill" style="border-style:dashed;color:var(--muted)">[and many more...]</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — NORM 3 · anchored statement, RHS = what it means + the making-of clip -->
+  <section class="slide normseq" id="s-transparency" data-step="0" data-notes="Norm 3 — radical transparency. The statement morphs to the left, then the right shows what it means: document your use (prompts, what you accepted and rejected, where it misled you); document continuously, not at the end; keep your portfolio site current. The clip is this very session building these slides — point at it: you're living the norm right now.">
+    <div class="nq">
+      <div class="nq-left">
+        <div class="eyebrow nq-eyebrow">Norm 3 of 3</div>
+        <div class="nq-title">Be <span class="accent">radically<br>transparent.</span></div>
+      </div>
+      <div class="nq-divider"></div>
+      <div class="nq-right">
+        <div class="nq-panel" data-panel="1">
+          <div class="eyebrow">What it means</div>
+          <ul class="clean is">
+            <li><strong>Document your use</strong> — what you prompted, accepted, rejected, and where it misled you.</li>
+            <li><strong>Continuous documentation</strong> — capture it as you go, not a write-up at the end.</li>
+            <li><strong>Keep your portfolio site current</strong> — update it every week.</li>
+          </ul>
+          <figure class="vidcard">
+            <video src="assets/making-of.mp4" muted loop playsinline preload="metadata"></video>
+            <figcaption>These very slides, being built — documented as it happened.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIAGNOSTIC QUIZ (relocatable — move this whole <section> wherever you like) -->
+  <section class="slide" id="s-quiz" data-notes="Quick diagnostic — paste your QR image / link in first. Decide live whether to run it now or hold it until after the fundamentals section; this slide moves freely. Keep it ~2 minutes and ungraded — it's a baseline so you know where to push and where to slow down.">
+    <div class="eyebrow" data-anim>Quick diagnostic · ~2 min</div>
+    <h2 data-anim>Before we go further — <span class="accent">what do you already know?</span></h2>
+    <div class="quizwrap" data-anim>
+      <img class="qr" src="assets/aistuff.png" alt="Quiz QR code for PollEv.com/aistuff"
+           style="border:none;background:#fff;padding:10px;object-fit:contain;">
+
+      <div class="qrside">
+        <p class="body" style="margin-top:0">A short, ungraded baseline. It just tells me where to push and where to ease off.</p>
+        <a class="quizlink no-advance" href="https://pollev.com/aistuff" target="_blank" rel="noopener">PollEv.com/aistuff</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 — SECTION DIVIDER: how it works -->
+  <section class="slide divider" data-notes="Pivot to the conceptual block. No math — intuition only. About 18 minutes. Tell them: by the end of this section you'll know what an LLM, a context window, an agent, and a harness actually are.">
+    <div class="num" data-anim>SECTION 02</div>
+    <h2 data-anim style="margin-top:18px">How these tools<br><span class="accent">actually work.</span></h2>
+    <p class="body" data-anim>Intuition, no math. LLM → context → agent → harness.</p>
+  </section>
+
+  <!-- 9 — WHAT IS AN LLM (interactive toy) -->
+  <section class="slide" data-notes="Two moves. (1) 'Sample' a few times on the same step → it lands on different words; that's the probabilistic core, and notice the off-topic words (banana, Tuesday…) barely register. (2) 'Take the top & append' repeatedly → always grabbing the highest-probability word builds a coherent sentence one token at a time. That is literally how text gets generated. Reset to start over.">
+    <div class="eyebrow" data-anim>Fundamentals · the model</div>
+    <h2 data-anim>An LLM <span class="accent">predicts the next token</span></h2>
+    <div class="toy no-advance" data-anim>
+      <div class="stem" id="stem">The turbine blade failed because of thermal <span class="slot">▮</span></div>
+      <div class="toks" id="toks"></div>
+      <div class="btnrow" style="margin-top:18px">
+        <button class="tbtn" id="btnSample">▶ sample (probabilistic)</button>
+        <button class="tbtn" id="btnGreedy">▶ take the top &amp; append</button>
+        <button class="tbtn" id="btnReset">↺ reset</button>
+      </div>
+      <div class="toynote" id="toynote">Each step is a probability distribution — off-topic words get almost none.</div>
+    </div>
+  </section>
+
+  <!-- 10 — CONTEXT WINDOW -->
+  <section class="slide" data-notes="The context window is the model's working memory — everything it can see right now. Two consequences: knowledge cutoff (doesn't know recent/private facts) and hallucination (when ungrounded it confidently invents). This is WHY we give models tools and retrieval — to ground them in real, current, checkable information.">
+    <div class="eyebrow" data-anim>Fundamentals · memory</div>
+    <h2 data-anim>The context window is its <span class="accent">working memory</span></h2>
+    <div class="cards">
+      <div class="card" data-anim><div class="n">01</div><h4>Only sees what's in front of it</h4><p>Everything it can reason over must fit in the window. Nothing else exists for it.</p></div>
+      <div class="card" data-anim><div class="n">02</div><h4>Knowledge cutoff</h4><p>It doesn't inherently know recent events or your private data. That's a gap, not a search.</p></div>
+      <div class="card" data-anim><div class="n">03</div><h4>It will confidently invent</h4><p>Ungrounded, it hallucinates. The fix: hand it tools and retrieval so it works from real, checkable facts.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 — MODEL TO AGENT -->
+  <section class="slide" data-notes="A raw model just emits text. An agent wraps it in a loop where it can take actions (tools), observe results, and iterate toward a goal. The difference between chatbot and agent is the loop and the tools — not the model itself.">
+    <div class="eyebrow" data-anim>Fundamentals · the leap</div>
+    <h2 data-anim>From a model to <span class="accent">an agent</span></h2>
+    <div class="two">
+      <div class="col" data-anim>
+        <h3 style="color:var(--muted)">A model</h3>
+        <p class="body" style="margin-top:6px">Takes text in, gives text out. One shot. No hands, no memory of the world.</p>
+      </div>
+      <div class="col" data-anim>
+        <h3 style="color:var(--teal)">An agent</h3>
+        <p class="body" style="margin-top:6px">Wraps the model in a loop: it acts (calls tools), observes results, and iterates toward a goal.</p>
+      </div>
+    </div>
+    <p class="body" data-anim style="margin-top:22px">The difference is <span class="accent">the loop and the tools</span> — not the model.</p>
+  </section>
+
+  <!-- 12 — AGENT LOOP (interactive) -->
+  <section class="slide" data-notes="Walk the cycle as it animates: Goal sets the target, Plan decides the next step, Act calls a tool, Observe reads the result — then back to Plan until done. Point out: THIS is what 'agentic' means. And note this animation is itself an example of going beyond a static diagram — the bar you'll set for them.">
+    <div class="eyebrow" data-anim>Fundamentals · the engine</div>
+    <h2 data-anim>The <span class="accent">agent loop</span></h2>
+    <div class="loop" data-anim>
+      <div class="node" data-step="0"><div class="lbl">Goal</div><div class="sub">the target</div></div>
+      <span class="arrow">→</span>
+      <div class="node" data-step="1"><div class="lbl">Plan</div><div class="sub">decide next step</div></div>
+      <span class="arrow">→</span>
+      <div class="node" data-step="2"><div class="lbl">Act</div><div class="sub">call a tool</div></div>
+      <span class="arrow">→</span>
+      <div class="node" data-step="3"><div class="lbl">Observe</div><div class="sub">read result</div></div>
+    </div>
+    <div class="loopback" data-anim><span class="rot">↻</span> &nbsp;loop back to Plan until the goal is met</div>
+  </section>
+
+  <!-- 13 — HARNESS -->
+  <section class="slide" data-notes="The harness is all the scaffolding around the model: instructions/system prompt, tool definitions, the loop's control flow, memory/context management, the environment (files, terminal, web, your codebase), and guardrails. KEY LINE: a good harness with an okay model often beats a great model with no harness. Your engineering quality lives in the harness — which is precisely why fundamentals matter.">
+    <div class="eyebrow" data-anim>Fundamentals · where your work lives</div>
+    <h2 data-anim>The <span class="accent">harness</span> is the scaffolding around the model</h2>
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card" data-anim><h4>Instructions</h4><p>System prompt and the rules of engagement.</p></div>
+      <div class="card" data-anim><h4>Tools</h4><p>What it's allowed to call — and how.</p></div>
+      <div class="card" data-anim><h4>Control flow</h4><p>The loop itself: when to act, retry, stop.</p></div>
+      <div class="card" data-anim><h4>Memory / context</h4><p>What it remembers and what you feed it.</p></div>
+      <div class="card" data-anim><h4>Environment</h4><p>Files, terminal, web, your codebase.</p></div>
+      <div class="card" data-anim><h4>Guardrails</h4><p>Limits that keep it safe and on-task.</p></div>
+    </div>
+    <p class="body" data-anim style="margin-top:24px;max-width:70ch"><span class="tealtxt">A good harness with an okay model often beats a great model with no harness.</span> Your engineering quality lives here.</p>
+  </section>
+
+  <!-- 14 — WHY FOR RESEARCH / YOUR JOB -->
+  <section class="slide" data-notes="Land the conceptual block on the human's role. You are the architect and the verifier. You can't trust what you can't check — which is precisely why we invest in tests, evals, and reproducibility. The agent does volume; you supply judgment, framing, and verification.">
+    <div class="split">
+      <div class="split-lead">
+        <div class="eyebrow" data-anim>Fundamentals · your role</div>
+        <h2 data-anim>You're the <span class="accent">architect</span> and the <span class="tealtxt">verifier</span></h2>
+      </div>
+      <div class="split-body">
+        <p class="body" data-anim>The agent supplies volume and speed. You supply judgment, framing, and verification. You cannot trust what you cannot check.</p>
+        <p class="body" data-anim>That single sentence is why this course invests so heavily in <span class="accent">tests, evaluation suites, and reproducibility.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 — SECTION DIVIDER: assignment -->
+  <section class="slide divider" data-notes="The payoff. Give it room and energy. This is the thing they leave the room thinking about.">
+    <div class="num" data-anim>SECTION 03</div>
+    <h2 data-anim style="margin-top:18px">Your first<br><span class="accent">assignment.</span></h2>
+    <p class="body" data-anim>It becomes the spine of the whole pilot.</p>
+  </section>
+
+  <!-- 16 — ASSIGNMENT CTA -->
+  <section class="slide" data-notes="Be concrete. A public portfolio website, in your own repo under the course GitHub org. v1 contents: who you are + your proposed summer project in detail (problem, why it matters, what success looks like). State the due date out loud. I link to every student site from the hub repo. Demo the org live right after the logistics slide.">
+    <div class="eyebrow" data-anim>The deliverable</div>
+    <div class="cta" data-anim>
+      <div class="due">Due — Monday, June 8</div>
+      <h3>Build your public portfolio site</h3>
+      <ul class="checklist">
+        <li><span class="bx">✓</span><span>A <strong>repo of your own</strong>, in the course GitHub organization &nbsp;<span class="kicker">github.com/AI-for-engineering-research</span></span></li>
+        <li><span class="bx">✓</span><span><strong>Who you are</strong> — a real about-you, not a stub</span></li>
+        <li><span class="bx">✓</span><span>Your <strong>proposed summer project, in detail</strong> — the problem, why it matters, what success looks like</span></li>
+      </ul>
+    </div>
+    <p class="body" data-anim>I link to every student site from the hub repo. This is your home base for the whole pilot.</p>
+  </section>
+
+  <!-- VELOCITY + WORKING STYLE -->
+  <section class="slide" id="s-velocity" data-notes="Reframe the assignment so nobody panics about web dev: it is NOT about learning HTML or JavaScript. It's about velocity — use the coding agent you already installed (wired to MIT's model provider) to reach an impressive site fast and get fluent in the workflow. Then the working-style nudge: start in the CLI agent, not the VS Code plugin, and READ the code it writes by hand. That builds command-line comfort and reinforces tool-not-crutch.">
+    <div class="eyebrow" data-anim>What this assignment is really about</div>
+    <h2 data-anim>Not about learning HTML. <span class="accent">Velocity.</span></h2>
+    <p class="body" data-anim style="max-width:66ch">You won't be graded on JavaScript. The point is to reach an <span class="tealtxt">impressive site fast</span> and get fluent in the workflow. You've already installed the coding agent and wired up MIT's model provider — now let it build.</p>
+    <div class="two" style="margin-top:24px">
+      <div class="col is" data-anim>
+        <h3>Move fast</h3>
+        <ul class="clean is">
+          <li>Let the agent write the site; you direct and review</li>
+          <li>Impressive &amp; live beats hand-coded &amp; slow</li>
+        </ul>
+      </div>
+      <div class="col" data-anim>
+        <h3 style="color:var(--amber)">…but stay hands-on</h3>
+        <ul class="clean">
+          <li>Start in the <strong>CLI agent</strong>, not the IDE plugin</li>
+          <li><strong>Read the code</strong> it writes — build terminal muscle</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17 — THE RITUAL -->
+  <section class="slide" data-notes="Set the weekly cadence. ~5 minutes each, every class: open your site, walk us through what you did, what you learned, how the project moved. The site is continuous documentation — it grows every week, it's never a final report.">
+    <div class="split">
+      <div class="split-lead">
+        <div class="eyebrow" data-anim>The weekly ritual</div>
+        <h2 data-anim>Every class, <span class="accent">five minutes each</span></h2>
+      </div>
+      <div class="split-body">
+        <p class="body" data-anim>You'll open your site and walk us through: what you did, what you learned, and how the project moved this week.</p>
+        <p class="body" data-anim>Your site is <span class="tealtxt">continuous documentation</span> — it grows every week. It is never a final report.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 — THE BAR -->
+  <section class="slide" data-notes="Set the quality bar explicitly. Don't dump a screenshot of 'this line went up.' Build interactive elements, live demos, linked artifacts, a narrative. Point at THIS deck: if a slide can hold a working agent-loop animation and a runnable test, your project log can too.">
+    <div class="eyebrow" data-anim>The bar</div>
+    <h2 data-anim>Go <span class="accent">beyond static figures</span></h2>
+    <div class="two">
+      <div class="col isnt" data-anim>
+        <h3>Not this</h3>
+        <ul class="clean isnt">
+          <li>A screenshot of “this line went up”</li>
+          <li>A wall of text nobody opens</li>
+          <li>A figure dump with no story</li>
+        </ul>
+      </div>
+      <div class="col is" data-anim>
+        <h3>This</h3>
+        <ul class="clean is">
+          <li>Interactive elements and live demos</li>
+          <li>Linked artifacts, code, and results</li>
+          <li>A narrative someone can actually follow</li>
+        </ul>
+      </div>
+    </div>
+    <p class="body" data-anim style="margin-top:22px">This deck is the example: a slide can hold a running test and an animated loop. So can your log.</p>
+  </section>
+
+  <!-- 19 — LOGISTICS -->
+  <section class="slide" data-notes="Practical. You'll be added to the GitHub org / get an invite; create your repo. I maintain a hub repo that links to all of you. Cadence: weekly show-and-tell, site always reflects latest state. Getting unstuck: bring it to class — discoveries AND dead-ends are both currency. Open the org in a tab and demo now.">
+    <div class="eyebrow" data-anim>Logistics</div>
+    <h2 data-anim>How we run this</h2>
+    <div class="cards">
+      <div class="card" data-anim><div class="n">01</div><h4>GitHub org</h4><p>You'll get an invite. Create your own repo inside the org — that's your site.</p></div>
+      <div class="card" data-anim><div class="n">02</div><h4>The hub</h4><p>My hub repo links out to every student site. One front door to the whole cohort.</p></div>
+      <div class="card" data-anim><div class="n">03</div><h4>Getting unstuck</h4><p>Bring it to class. Discoveries and dead-ends are both currency here.</p></div>
+    </div>
+  </section>
+
+  <!-- 20 — RECAP -->
+  <section class="slide" data-notes="Restate the three norms in one breath each, then the single next action. Leave time for questions. End warm.">
+    <div class="eyebrow" data-anim>So, to recap</div>
+    <h2 data-anim>Three norms, <span class="accent">one next step</span></h2>
+    <div class="recap">
+      <div class="r" data-anim><div class="t">Shared frontier</div><div class="d">Nobody's the expert. Be proactive; bring what you find.</div></div>
+      <div class="r" data-anim><div class="t">Tool, not crutch</div><div class="d">AI amplifies fundamentals — it never replaces them.</div></div>
+      <div class="r" data-anim><div class="t">Transparency</div><div class="d">Document how you used it. Process is the research.</div></div>
+    </div>
+    <p class="body" data-anim style="margin-top:30px">Next step → your portfolio site by <span class="accent">Monday, June 8</span>. Questions?</p>
+  </section>
+
+  <!-- 21 — BEFORE NEXT SESSION -->
+  <section class="slide" data-notes="Point them to optional-but-recommended pre-work for next time: 3Blue1Brown on how LLMs / neural networks work and on transformer architecture. It makes today's intuition click and lands the no-math fundamentals harder.">
+    <div class="split">
+      <div class="split-lead">
+        <div class="eyebrow" data-anim>Before next session</div>
+        <h2 data-anim>A little <span class="accent">homework to watch</span></h2>
+      </div>
+      <div class="split-body">
+        <p class="body" data-anim>For intuition on what's under the hood, watch 3Blue1Brown on how LLMs and neural networks work, and on transformer architecture. Optional, but it makes the fundamentals click.</p>
+        <a class="quizlink no-advance" href="https://www.youtube.com/watch?v=wjZofJX0v4M" target="_blank" rel="noopener">youtube.com/watch?v=wjZofJX0v4M</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Chrome -->
+<div class="counter"><b id="cur">1</b> / <span id="tot">20</span></div>
+<div class="hint"><span class="key">←</span><span class="key">→</span> navigate &nbsp;·&nbsp; <span class="key">N</span> notes &nbsp;·&nbsp; <span class="key">F</span> full screen</div>
+<div class="nav">
+  <button id="prev" aria-label="Previous">‹</button>
+  <button id="next" aria-label="Next">›</button>
+</div>
+
+<div class="notes" id="notes"><div class="ttl">Speaker notes</div><div class="txt" id="notesTxt"></div></div>
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total  = slides.length;
+  let i = 0;
+
+  const progress = document.getElementById('progress');
+  const cur = document.getElementById('cur');
+  const notes = document.getElementById('notes');
+  const notesTxt = document.getElementById('notesTxt');
+  document.getElementById('tot').textContent = total;
+
+  let sub = 0; // sub-step within an anchored-norm slide
+
+  const panels  = (s)=>s.querySelectorAll('.nq-panel');
+  const maxStep = (s)=>panels(s).length;            // 0 ⇒ not a stepper
+
+  function applySub(slide){
+    slide.setAttribute('data-step', sub);
+    panels(slide).forEach(p=>p.classList.toggle('on', +p.dataset.panel === sub));
+    slide.querySelectorAll('.nq-dots i').forEach((d,idx)=>d.classList.toggle('on', idx === sub-1));
+    slide.querySelectorAll('video').forEach(v=>{
+      const onNow = v.closest('.nq-panel')?.classList.contains('on');
+      if(onNow){ try{ v.currentTime = 0; v.play(); }catch(e){} } else { v.pause(); }
+    });
+  }
+
+  // Wrap every word of each statement in its own <span class="w"> so they can morph individually.
+  // Preserves <br> and inline spans (.accent / .nobody); runs once at boot.
+  function wrapWordsIn(node){
+    Array.from(node.childNodes).forEach(n=>{
+      if(n.nodeType === 3){                                   // text node → split into word spans + spaces
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part=>{
+          if(part === '') return;
+          if(/^\s+$/.test(part)){ frag.appendChild(document.createTextNode(part)); return; }
+          const w = document.createElement('span'); w.className = 'w'; w.textContent = part;
+          frag.appendChild(w);
+        });
+        node.replaceChild(frag, n);
+      } else if(n.nodeType === 1 && n.tagName !== 'BR'){      // recurse into .accent / .nobody, keep the span
+        wrapWordsIn(n);
+      }
+    });
+  }
+  function wrapStatements(){
+    document.querySelectorAll('.nq-title').forEach(t=>{ if(!t.querySelector('.w')) wrapWordsIn(t); });
+  }
+
+  const SMOOTH = 'cubic-bezier(.37,0,.63,1)';                 // smoothstep — eases in and out, no jerk
+  function flipBox(el, a){                                    // FLIP one element from old rect `a` to its new spot
+    const b = el.getBoundingClientRect();
+    const s = b.width ? a.width / b.width : 1;
+    el.style.transformOrigin = 'top left';
+    el.style.transition = 'none';
+    el.style.transform  = `translate(${a.left-b.left}px, ${a.top-b.top}px) scale(${s})`;
+  }
+  // FLIP: morph the eyebrow as a box, and every WORD of the statement on its own,
+  // so the 3-line↔4-line reflow animates smoothly instead of the box scaling over a hard re-wrap.
+  function flipMorph(slide, mutate){
+    const eyebrow = slide.querySelector('.nq-eyebrow');
+    const words   = Array.from(slide.querySelectorAll('.nq-title .w'));
+    const targets = eyebrow ? [eyebrow, ...words] : words;
+    const firsts  = targets.map(el=>el.getBoundingClientRect());   // measure BEFORE the layout changes
+    mutate();
+    targets.forEach((el,k)=>{                                       // invert: pin each back to where it was
+      const a = firsts[k];
+      const s = el === eyebrow ? null : (a.height ? a.height / el.getBoundingClientRect().height : 1);
+      if(el === eyebrow){ flipBox(el, a); }
+      else {
+        const b = el.getBoundingClientRect();
+        el.style.transformOrigin = 'top left';
+        el.style.transition = 'none';
+        el.style.transform  = `translate(${a.left-b.left}px, ${a.top-b.top}px) scale(${s})`;  // uniform scale from font-size ratio
+      }
+    });
+    slide.getBoundingClientRect();                                  // force reflow — commit the inverted start
+    // double rAF so the inverted frame actually paints before the transition plays → no snap
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      targets.forEach(el=>{ el.style.transition = `transform .6s ${SMOOTH}`; el.style.transform = ''; });
+    }));
+    setTimeout(()=>{ targets.forEach(el=>{ el.style.transition=''; el.style.transformOrigin=''; }); }, 760);
+  }
+
+  function step(slide, delta){
+    const was = sub >= 1;
+    sub += delta;
+    if((sub >= 1) !== was) flipMorph(slide, ()=>applySub(slide));  // crossing collapse↔expand → morph
+    else applySub(slide);                                          // right-side-only swap
+  }
+
+  function show(n, dir){
+    dir = dir || (n > i ? 1 : -1);
+    i = Math.max(0, Math.min(total-1, n));
+    const slide = slides[i];
+    const m = maxStep(slide);
+    sub = m ? (dir < 0 ? m : 0) : 0;     // arriving backwards ⇒ land fully expanded
+    slides.forEach((s,idx)=>s.classList.toggle('active', idx===i));
+    document.querySelectorAll('video').forEach(v=>v.pause());
+    if(m) applySub(slide); else slide.removeAttribute('data-step');
+    progress.style.width = ((i)/(total-1)*100) + '%';
+    cur.textContent = i+1;
+    notesTxt.textContent = slide.getAttribute('data-notes') || '';
+    onSlide(i);
+  }
+  function next(){
+    const slide = slides[i], m = maxStep(slide);
+    if(m && sub < m){ step(slide, +1); return; }
+    show(i+1, 1);
+  }
+  function prev(){
+    const slide = slides[i], m = maxStep(slide);
+    if(m && sub > 0){ step(slide, -1); return; }
+    show(i-1, -1);
+  }
+
+  document.getElementById('next').addEventListener('click', e=>{e.stopPropagation();next();});
+  document.getElementById('prev').addEventListener('click', e=>{e.stopPropagation();prev();});
+
+  // click background to advance, but never when interacting with controls
+  document.getElementById('deck').addEventListener('click', e=>{
+    if(e.target.closest('button, a, input, .no-advance')) return;
+    next();
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ show(0); }
+    else if(e.key==='End'){ show(total-1); }
+    else if(e.key.toLowerCase()==='n'){ notes.classList.toggle('open'); }
+    else if(e.key.toLowerCase()==='f'){
+      if(!document.fullscreenElement){ document.documentElement.requestFullscreen?.(); }
+      else { document.exitFullscreen?.(); }
+    }
+  });
+
+  /* ---------- per-slide interactive hooks ---------- */
+  let loopTimer = null;
+
+  function onSlide(idx){
+    const id = slides[idx];
+    // (re)render the next-token toy when that slide opens
+    if(id.querySelector('#toks')) renderToy();
+    // run/stop the agent-loop animation only while visible
+    if(id.querySelector('.loop')){ startLoop(id); } else { stopLoop(); }
+  }
+
+  // ---- next-token toy (probabilistic sampling + greedy append) ----
+  const TOY = {
+    prefix: "The turbine blade failed because of thermal",
+    step: 0,
+    built: [],
+    steps: [
+      [["fatigue",.44],["stress",.21],["cycling",.13],["creep",.11],["shock",.07],["banana",.02],["Tuesday",.02]],
+      [["after",.34],["caused",.20],["from",.16],["during",.13],["near",.09],["and",.04],["purple",.02]],
+      [["repeated",.39],["prolonged",.23],["several",.15],["many",.11],["the",.08],["ocean",.02],["quickly",.02]],
+      [["start-up",.36],["thermal",.22],["load",.18],["heating",.12],["stress",.08],["guitar",.02],["maybe",.02]],
+      [["cycles",.53],["transients",.18],["events",.13],["loads",.11],["sequences",.03],["sandwich",.02]]
+    ]
+  };
+  function toySetStem(slot){
+    const el = document.getElementById('stem');
+    if(!el) return;
+    const words = TOY.built.length ? " " + TOY.built.join(" ") : "";
+    el.innerHTML = TOY.prefix + words + ' <span class="slot">' + slot + '</span>';
+  }
+  function renderToy(){
+    const wrap = document.getElementById('toks');
+    if(!wrap) return;
+    const note = document.getElementById('toynote');
+    if(TOY.step >= TOY.steps.length){
+      toySetStem(".");
+      wrap.innerHTML = "";
+      if(note) note.textContent = 'Complete — built by always taking the top token. Coherent text from a chain of next-token guesses.';
+      return;
+    }
+    toySetStem("▮");
+    wrap.innerHTML = "";
+    TOY.steps[TOY.step].forEach(([w,p])=>{
+      const row = document.createElement('div');
+      row.className = 'tok' + (p <= 0.025 ? ' noise' : '');
+      row.dataset.name = w; row.dataset.p = p;
+      row.innerHTML = '<span class="name">'+w+'</span>'+
+        '<span class="barwrap"><span class="bar"></span></span>'+
+        '<span class="pct">'+Math.round(p*100)+'%</span>';
+      wrap.appendChild(row);
+    });
+    requestAnimationFrame(()=>setTimeout(()=>{
+      wrap.querySelectorAll('.tok').forEach(t=>{
+        t.querySelector('.bar').style.width = (parseFloat(t.dataset.p)*100)+'%';
+      });
+    },60));
+  }
+  document.getElementById('btnSample')?.addEventListener('click', ()=>{
+    if(TOY.step >= TOY.steps.length) return;
+    const rows = Array.from(document.querySelectorAll('#toks .tok'));
+    rows.forEach(t=>t.classList.remove('picked'));
+    const dist = TOY.steps[TOY.step];
+    const r = Math.random(); let acc=0, idx=0;
+    for(let j=0;j<dist.length;j++){ acc+=dist[j][1]; if(r<=acc){ idx=j; break; } }
+    rows[idx]?.classList.add('picked');
+    const nt = document.getElementById('toynote');
+    if(nt) nt.textContent = 'Sampled "'+dist[idx][0]+'". Run again → maybe a different word. That\u2019s the probabilistic part (and why off-topic words almost never surface).';
+  });
+  document.getElementById('btnGreedy')?.addEventListener('click', ()=>{
+    if(TOY.step >= TOY.steps.length) return;
+    const dist = TOY.steps[TOY.step];
+    let top = dist[0]; for(const d of dist){ if(d[1] > top[1]) top = d; }
+    TOY.built.push(top[0]);
+    TOY.step++;
+    renderToy();
+  });
+  document.getElementById('btnReset')?.addEventListener('click', ()=>{
+    TOY.step = 0; TOY.built = [];
+    renderToy();
+    const nt = document.getElementById('toynote');
+    if(nt) nt.textContent = 'Each step is a probability distribution — off-topic words get almost none.';
+  });
+
+  // ---- smoke vs property test ----
+  const out = document.getElementById('testOut');
+  document.getElementById('btnSmoke')?.addEventListener('click', ()=>{
+    out.className = 'result pass';
+    out.innerHTML = '✓ smoke test passed<br>median([1, 2, 3]) == 2 &nbsp;→&nbsp; looks done.<br><span style="color:var(--muted)">…but that list was already sorted.</span>';
+  });
+  document.getElementById('btnProp')?.addEventListener('click', ()=>{
+    out.className = 'result fail';
+    out.innerHTML = '✗ property test failed<br>median([1, 3, 2]) → <b>3</b> &nbsp;·&nbsp; median([3, 1, 2]) → <b>1</b><br><span style="color:var(--muted)">same numbers, reordered → different answers, and 2 is the real median. It never sorted. A metamorphic property (order must not matter) caught it.</span>';
+  });
+
+  // ---- agent loop ----
+  function startLoop(scope){
+    stopLoop();
+    const nodes = Array.from(scope.querySelectorAll('.node'));
+    let k = 0;
+    const tick = ()=>{
+      nodes.forEach(n=>n.classList.remove('on'));
+      nodes[k % nodes.length].classList.add('on');
+      k = (k+1) % nodes.length;
+    };
+    tick();
+    loopTimer = setInterval(tick, 900);
+  }
+  function stopLoop(){ if(loopTimer){ clearInterval(loopTimer); loopTimer=null; } }
+
+  wrapStatements();   // split each norm statement into per-word spans before the first render
+  show(0);
+})();
+</script>
+</body>
+</html>
