@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Coding Agents for Engineering Research — Summer Pilot</title>
+
+<!-- Fonts load from Google Fonts when online; falls back gracefully offline. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-0:#080b12;
+  --ink:#eef1f7;
+  --muted:#9aa6bb;
+  --faint:#586173;
+  --line:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.035);
+  --card-bd:rgba(255,255,255,.09);
+  --amber:#e8b04b;
+  --teal:#5fd2c2;
+  --indigo:#8ea0e8;
+  --rose:#d98aa8;
+  --display:"Bricolage Grotesque","Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --pad: clamp(20px, 4vh, 50px);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}          /* one screen, no scrolling */
+body{
+  font-family:var(--body);
+  background:var(--bg-0);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ---------- Living background ---------- */
+.bg-wrap{position:fixed;inset:0;z-index:-3;animation:hue 30s ease-in-out infinite alternate;
+  transform:translate3d(calc(var(--mx,0) * -16px), calc(var(--my,0) * -16px), 0);will-change:transform,filter;}
+.bg{
+  position:fixed;inset:-25%;z-index:-3;
+  background:
+    radial-gradient(46% 58% at 22% 26%, rgba(72,92,168,.42), transparent 70%),
+    radial-gradient(52% 54% at 80% 74%, rgba(26,118,118,.34), transparent 72%),
+    radial-gradient(40% 48% at 62% 14%, rgba(122,74,140,.22), transparent 70%),
+    radial-gradient(60% 60% at 50% 110%, rgba(40,52,92,.40), transparent 70%),
+    var(--bg-0);
+  animation:drift 30s ease-in-out infinite;   /* 30s orbit — the bright center wanders spatially */
+  will-change:transform;
+}
+@keyframes drift{
+  0%  {transform:translate3d(-4.5%,-3.5%,0) scale(1.10);}
+  25% {transform:translate3d( 4%, -2.5%,0) scale(1.14);}
+  50% {transform:translate3d( 4.5%, 4%, 0) scale(1.11);}
+  75% {transform:translate3d(-2.5%, 4.5%,0) scale(1.14);}
+  100%{transform:translate3d(-4.5%,-3.5%,0) scale(1.10);}
+}
+@keyframes hue{ from{filter:hue-rotate(-22deg) saturate(.95);} to{filter:hue-rotate(30deg) saturate(1);} }
+.grain{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.vignette{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,.45) 100%);}
+
+/* ---------- Shell ---------- */
+.wrap{
+  position:relative;height:100vh;height:100svh;
+  display:flex;flex-direction:column;
+  padding:var(--pad);gap:clamp(14px,2.3vh,28px);
+}
+
+/* ---------- Header ---------- */
+header.hdr{flex:0 0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:22px;}
+.brand{max-width:64ch;}
+.eyebrow{
+  font-family:var(--mono);font-size:clamp(10px,1vw,13px);
+  letter-spacing:.28em;text-transform:uppercase;color:var(--amber);
+  display:flex;align-items:center;gap:13px;margin-bottom:clamp(9px,1.3vh,16px);
+}
+.eyebrow::before{content:"";width:42px;height:1px;background:var(--amber);opacity:.7;display:inline-block;}
+.eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--teal);}
+h1{
+  font-family:var(--display);font-weight:800;line-height:1.02;letter-spacing:-.02em;
+  font-size:clamp(26px,4.3vmin,52px);
+  background:linear-gradient(95deg,var(--ink) 0%,var(--ink) 36%,var(--amber) 64%,var(--teal) 92%);
+  background-size:200% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  /* 1s hold on white, then the amber/teal sweeps in */
+  animation:sheen 7s ease-in-out 1s infinite alternate;
+}
+@keyframes sheen{from{background-position:0% 50%}to{background-position:100% 50%}}
+.brand p.lead{font-size:clamp(13px,1.25vw,17px);line-height:1.5;color:var(--muted);
+  max-width:62ch;margin-top:clamp(8px,1.2vh,14px);}
+.brand p.lead b{color:var(--ink);font-weight:600;}
+
+/* ---------- Tools & links: low-key corner card → modal ---------- */
+.tools{
+  flex:0 0 auto;display:flex;align-items:center;gap:11px;cursor:pointer;
+  font-family:var(--body);text-align:left;
+  background:var(--card);border:1px solid var(--card-bd);border-radius:13px;
+  padding:9px 13px;color:var(--ink);transition:.25s;backdrop-filter:blur(6px);
+}
+.tools:hover{border-color:rgba(95,210,194,.45);background:rgba(255,255,255,.05);}
+.tools .ic{display:grid;grid-template-columns:1fr 1fr;gap:3px;flex:0 0 auto;}
+.tools .ic i{width:6px;height:6px;border-radius:2px;background:var(--teal);opacity:.85;}
+.tools .tx{display:flex;flex-direction:column;line-height:1.2;}
+.tools .tx .a{font-size:13px;font-weight:600;}
+.tools .tx .b{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em;margin-top:2px;}
+
+/* ---------- Main ---------- */
+main{flex:0 0 auto;display:flex;flex-direction:column;gap:clamp(14px,2.2vh,26px);min-height:0;}
+.phead{display:flex;align-items:baseline;gap:14px;margin-bottom:clamp(10px,1.4vh,15px);}
+.phead h2{font-family:var(--display);font-weight:700;letter-spacing:-.01em;}
+.phead .hint{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;}
+
+/* ===== PROMINENT: student projects ===== */
+.people{--accent:var(--indigo);--edge:rgba(142,160,232,.45);}
+.people .phead h2{font-size:clamp(21px,2.4vw,32px);color:var(--accent);}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.4vw,18px);}
+.pcard{
+  display:flex;flex-direction:column;text-decoration:none;color:var(--ink);
+  background:var(--card);border:1px solid var(--card-bd);border-radius:16px;overflow:hidden;
+  transition:transform .3s ease, border-color .3s ease, background .3s ease, box-shadow .3s ease;
+}
+a.pcard:hover{transform:translateY(-5px);border-color:var(--edge);background:rgba(255,255,255,.05);
+  box-shadow:0 16px 40px rgba(0,0,0,.35);}
+.thumb{position:relative;height:clamp(72px,12.5vh,120px);background:rgba(0,0,0,.28);
+  border-bottom:1px solid var(--card-bd);display:grid;place-items:center;overflow:hidden;}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumb .ph{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:0 14px;
+  color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
+.thumb .ph small{font-family:var(--body);font-size:10.5px;letter-spacing:0;text-transform:none;opacity:.85;line-height:1.3;}
+.pcard.todo .thumb{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 12px,transparent 12px 24px);}
+.pbody{display:flex;align-items:center;gap:11px;padding:11px 13px;}
+.pbody .ptag{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--accent);
+  border:1px solid var(--card-bd);border-radius:7px;padding:4px 8px;min-width:40px;text-align:center;}
+.pbody .pmeta{display:flex;flex-direction:column;min-width:0;}
+.pbody .pname{font-size:clamp(13px,1.2vw,15.5px);font-weight:600;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcard.todo .pname{color:var(--muted);font-weight:500;}
+.pbody .pstudent{font-size:11.5px;color:var(--muted);font-style:italic;line-height:1.3;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ===== SECONDARY: classes ===== */
+.classes{--accent:var(--amber);--edge:rgba(232,176,75,.42);}
+.classes .phead h2{font-size:clamp(15px,1.55vw,20px);color:var(--accent);}
+.sessions{list-style:none;display:flex;flex-wrap:wrap;gap:10px;}
+.scard{
+  position:relative;display:flex;align-items:center;gap:12px;
+  border:1px solid var(--card-bd);border-radius:13px;padding:11px 13px;
+  background:rgba(255,255,255,.025);min-width:248px;max-width:360px;
+  transition:border-color .3s ease, background .3s ease, transform .3s ease;
+}
+.scard:hover{border-color:var(--edge);background:rgba(255,255,255,.06);transform:translateY(-3px);}
+.scard .stretch{position:absolute;inset:0;z-index:1;border-radius:13px;}      /* full-card link → presentation */
+.scard .tag{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--accent);
+  border:1px solid var(--card-bd);border-radius:7px;padding:4px 8px;min-width:40px;text-align:center;}
+.scard .smeta{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;}
+.scard .sname{font-size:14px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scard .sdesc{font-size:11.5px;color:var(--muted);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.scard .snotes{position:relative;z-index:2;flex:0 0 auto;font-family:var(--mono);font-size:11px;
+  letter-spacing:.04em;color:var(--faint);text-decoration:none;border:1px solid transparent;
+  border-radius:7px;padding:4px 8px;transition:.25s;}
+.scard .snotes:hover{color:var(--accent);border-color:var(--edge);background:rgba(255,255,255,.04);}
+.scard .arr{flex:0 0 auto;font-family:var(--mono);color:var(--faint);font-size:16px;transition:transform .3s ease,color .3s ease;}
+.scard:hover .arr{transform:translateX(4px);color:var(--accent);}
+
+/* ---------- Footer ---------- */
+footer{flex:0 0 auto;margin-top:auto;
+  font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.04em;}
+footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
+
+/* ---------- Modal ---------- */
+.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px;
+  background:rgba(4,6,11,.62);backdrop-filter:blur(8px);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease, visibility .25s linear .25s;}
+.modal.show{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .25s ease;}
+.sheet{--accent:var(--teal);--edge:rgba(95,210,194,.45);
+  width:min(94vw,460px);max-height:82vh;overflow:auto;
+  background:rgba(12,16,24,.96);border:1px solid var(--card-bd);border-radius:20px;
+  padding:clamp(20px,3vw,30px);
+  transform:translateY(10px) scale(.98);transition:transform .3s cubic-bezier(.2,.7,.2,1);}
+.modal.show .sheet{transform:none;}
+.sheet .shead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sheet .shead h3{font-family:var(--display);font-size:22px;font-weight:700;color:var(--accent);}
+.sheet .shead .sub{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;margin-top:3px;}
+.xbtn{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--card-bd);
+  background:rgba(255,255,255,.03);color:var(--muted);font-size:18px;cursor:pointer;transition:.25s;}
+.xbtn:hover{border-color:var(--edge);color:var(--accent);}
+.mlist{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.row{display:flex;align-items:center;gap:13px;text-decoration:none;color:var(--ink);
+  border:1px solid var(--card-bd);border-radius:12px;padding:11px 13px;background:rgba(255,255,255,.02);
+  transition:border-color .25s ease, background .25s ease, transform .25s ease;}
+.row:hover{border-color:var(--edge);background:rgba(255,255,255,.05);transform:translateX(3px);}
+.row .tag{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--accent);
+  border:1px solid var(--card-bd);border-radius:7px;padding:4px 8px;min-width:54px;text-align:center;}
+.row .rmeta{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;}
+.row .rname{font-size:15px;font-weight:600;line-height:1.25;}
+.row .rdesc{font-size:11.5px;color:var(--muted);line-height:1.3;}
+.row .arr{flex:0 0 auto;font-family:var(--mono);color:var(--faint);font-size:16px;transition:transform .25s ease,color .25s ease;}
+.row:hover .arr{transform:translateX(4px);color:var(--accent);}
+
+/* ---------- Entrance ---------- */
+[data-anim]{opacity:0;transform:translateY(16px);
+  transition:opacity .7s ease, transform .8s cubic-bezier(.2,.75,.2,1);}
+.ready [data-anim]{opacity:1;transform:none;}
+.ready [data-anim]:nth-child(1){transition-delay:.04s}
+.ready [data-anim]:nth-child(2){transition-delay:.12s}
+.ready [data-anim]:nth-child(3){transition-delay:.20s}
+
+/* ---------- Responsive: stack + allow scroll only on small screens ---------- */
+@media (max-width:920px){
+  html,body{overflow:auto}
+  .wrap{height:auto;min-height:100vh;}
+  header.hdr{flex-wrap:wrap;}
+  .pgrid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:560px){
+  .pgrid{grid-template-columns:1fr;}
+}
+@media (prefers-reduced-motion:reduce){
+  .bg,.bg-wrap,h1{animation:none}
+  [data-anim]{transition:none}
+  h1{color:var(--ink);-webkit-text-fill-color:var(--ink);}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-wrap"><div class="bg" id="bg"></div></div>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<div class="wrap">
+
+  <header class="hdr">
+    <div class="brand">
+      <div class="eyebrow" data-anim>Summer Pilot · 2026 <span class="dot"></span> MIT</div>
+      <h1 data-anim>AI Coding Agents<br>for Engineering Research</h1>
+      <p class="lead" data-anim>A hands-on pilot using frontier AI as a power tool for real research,
+        under engineering discipline.</p>
+    </div>
+    <button class="tools" id="toolsBtn" data-anim aria-haspopup="dialog" aria-controls="toolsModal">
+      <span class="ic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span class="tx"><span class="a">Tools &amp; links</span><span class="b">Parley · Pi · nono · org</span></span>
+    </button>
+  </header>
+
+  <main>
+
+    <!-- ============ CLASSES ============ -->
+    <section class="classes" data-anim>
+      <div class="phead"><h2>Classes</h2><span class="hint">click a session to open its presentation</span></div>
+      <ul class="sessions" id="sessions">
+
+        <li>
+          <div class="scard">
+            <a class="stretch" href="session-1/lesson1.html" aria-label="Open Session 01 presentation"></a>
+            <span class="tag">01</span>
+            <span class="smeta">
+              <span class="sname">Agentic AI for Engineering Research</span>
+              <span class="sdesc">Norms, fundamentals &amp; the first assignment</span>
+            </span>
+            <a class="snotes" href="session-1/session-1-plan.md">notes</a>
+            <span class="arr">→</span>
+          </div>
+        </li>
+
+        <!-- Add the next session by copying one <li> block and pointing it at session-2/… -->
+
+      </ul>
+    </section>
+
+    <!-- ============ STUDENT PROJECTS (prominent) ============ -->
+    <section class="people" data-anim>
+      <div class="phead"><h2>Student projects</h2><span class="hint">portfolios go live through the term</span></div>
+      <div class="pgrid" id="pgrid">
+
+        <!-- When a student's site is ready, swap the placeholder for a linked card.
+             Keep the student-name line; fill in the project title and a thumbnail:
+        <a class="pcard" href="https://STUDENT-SITE-URL" target="_blank" rel="noopener">
+          <div class="thumb"><img src="thumbs/01.png" alt="Project thumbnail"></div>
+          <div class="pbody"><span class="ptag">01</span>
+            <span class="pmeta"><span class="pname">Project title</span><span class="pstudent">Marlene Euchenhofer</span></span>
+          </div>
+        </a>
+        -->
+
+        <article class="pcard todo">
+          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
+          <div class="pbody"><span class="ptag">01</span><span class="pmeta"><span class="pname">Awaiting portfolio</span><span class="pstudent">Marlene Euchenhofer</span></span></div>
+        </article>
+        <article class="pcard todo">
+          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
+          <div class="pbody"><span class="ptag">02</span><span class="pmeta"><span class="pname">Awaiting portfolio</span><span class="pstudent">Louis Robion</span></span></div>
+        </article>
+        <article class="pcard todo">
+          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
+          <div class="pbody"><span class="ptag">03</span><span class="pmeta"><span class="pname">Awaiting portfolio</span><span class="pstudent">Aditeya Shukla</span></span></div>
+        </article>
+        <article class="pcard todo">
+          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
+          <div class="pbody"><span class="ptag">04</span><span class="pmeta"><span class="pname">Awaiting portfolio</span><span class="pstudent">Tara Housen</span></span></div>
+        </article>
+        <article class="pcard todo">
+          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
+          <div class="pbody"><span class="ptag">05</span><span class="pmeta"><span class="pname">Awaiting portfolio</span><span class="pstudent">Marcos Logroño</span></span></div>
+        </article>
+        <article class="pcard todo">
+          <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot once your repo is ready</small></span></div>
+          <div class="pbody"><span class="ptag">06</span><span class="pmeta"><span class="pname">Awaiting portfolio</span><span class="pstudent">Mina Cezairli</span></span></div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer data-anim>created by Prashanth <span class="aside">(with the help of AI)</span></footer>
+
+</div>
+
+<!-- ============ MODAL: external links ============ -->
+<div class="modal" id="toolsModal" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
+  <div class="sheet">
+    <div class="shead">
+      <div>
+        <h3 id="toolsTitle">Tools &amp; links</h3>
+        <div class="sub">what the pilot is built on</div>
+      </div>
+      <button class="xbtn" id="toolsClose" aria-label="Close">✕</button>
+    </div>
+    <ul class="mlist">
+      <li><a class="row" href="https://github.com/AI-for-engineering-research" target="_blank" rel="noopener">
+        <span class="tag">Org</span>
+        <span class="rmeta"><span class="rname">GitHub organization</span><span class="rdesc">where every student repo lives</span></span>
+        <span class="arr">↗</span></a></li>
+      <li><a class="row" href="https://parley.api.mit.edu" target="_blank" rel="noopener">
+        <span class="tag">API</span>
+        <span class="rmeta"><span class="rname">Parley</span><span class="rdesc">MIT's model gateway — the shared substrate</span></span>
+        <span class="arr">↗</span></a></li>
+      <li><a class="row" href="https://pi.dev" target="_blank" rel="noopener">
+        <span class="tag">Agent</span>
+        <span class="rmeta"><span class="rname">Pi</span><span class="rdesc">the minimal coding agent we dissect</span></span>
+        <span class="arr">↗</span></a></li>
+      <li><a class="row" href="https://nono.sh" target="_blank" rel="noopener">
+        <span class="tag">Sandbox</span>
+        <span class="rmeta"><span class="rname">nono</span><span class="rdesc">capability-based sandbox for least privilege</span></span>
+        <span class="arr">↗</span></a></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Reveal on load.
+  requestAnimationFrame(()=>document.body.classList.add('ready'));
+
+  // ---- Tools modal ----
+  const modal = document.getElementById('toolsModal');
+  const open  = ()=>{ modal.classList.add('show'); document.getElementById('toolsClose').focus(); };
+  const close = ()=> modal.classList.remove('show');
+  document.getElementById('toolsBtn').addEventListener('click', open);
+  document.getElementById('toolsClose').addEventListener('click', close);
+  modal.addEventListener('click', e=>{ if(e.target === modal) close(); });   // backdrop
+  addEventListener('keydown', e=>{ if(e.key === 'Escape' && modal.classList.contains('show')) close(); });
+
+  // ---- Pointer-reactive background parallax (vars on :root so the orbit + nudge compose) ----
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!reduce && matchMedia('(pointer:fine)').matches){
+    let tx=0,ty=0,cx=0,cy=0,raf=null;
+    addEventListener('pointermove', e=>{
+      tx = (e.clientX / innerWidth  - .5) * 2;
+      ty = (e.clientY / innerHeight - .5) * 2;
+      if(!raf) raf = requestAnimationFrame(loop);
+    });
+    function loop(){
+      cx += (tx-cx)*.06; cy += (ty-cy)*.06;
+      root.style.setProperty('--mx', cx.toFixed(3));
+      root.style.setProperty('--my', cy.toFixed(3));
+      if(Math.abs(tx-cx)>.002 || Math.abs(ty-cy)>.002){ raf = requestAnimationFrame(loop); }
+      else { raf = null; }
+    }
+  }
+})();
+</script>
+</body>
+</html>

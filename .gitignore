@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+**/.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# Obsidian vault config
+.obsidian/
+
+# Editor / OS noise
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# Build output (if a static site gets generated here later)
+_site/
+.quarto/
+node_modules/
+
+# Session 1 working files (kept local for now — heavy media, not pushed)
+session-1/
