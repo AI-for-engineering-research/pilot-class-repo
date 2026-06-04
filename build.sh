@@ -23,6 +23,8 @@ if [ -d session-1 ]; then
   mkdir -p "$OUT/session-1/assets"
   cp session-1/lesson1.html      "$OUT/session-1/"
   cp session-1/session-1-plan.md "$OUT/session-1/"
+  # Quiz QR code shown on the diagnostic slide (lesson1.html references assets/aistuff.png).
+  [ -f session-1/assets/aistuff.png ] && cp session-1/assets/aistuff.png "$OUT/session-1/assets/"
   [ -f session-1/assets/making-of.mp4 ] && cp session-1/assets/making-of.mp4 "$OUT/session-1/assets/"
 fi
 
