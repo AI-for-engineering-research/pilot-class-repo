@@ -29,7 +29,7 @@ if [ -d session-1 ]; then
 fi
 
 # Student-project thumbnails, once they exist:
-#   cp -R thumbs "$OUT/thumbs"
+cp -R thumbs "$OUT/thumbs"
 
 echo "Built $(find "$OUT" -type f | wc -l | tr -d ' ') file(s) into $OUT/:"
 find "$OUT" -type f | sed "s|^$OUT/|  |" | sort
