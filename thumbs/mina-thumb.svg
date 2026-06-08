@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Airspace structure and controller mental models</title>
+  <desc id="desc">A stylized radar-inspired airspace map with crossing flight paths and sector boundaries.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10192f"/>
+      <stop offset="0.5" stop-color="#17223b"/>
+      <stop offset="1" stop-color="#301b46"/>
+    </linearGradient>
+    <linearGradient id="route" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9ef3ff"/>
+      <stop offset="0.55" stop-color="#ff9ee8"/>
+      <stop offset="1" stop-color="#d8ff79"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <g opacity="0.14" stroke="#ffffff" stroke-width="1">
+    <path d="M0 110H1200M0 220H1200M0 330H1200M0 440H1200M0 550H1200M0 660H1200"/>
+    <path d="M120 0V700M240 0V700M360 0V700M480 0V700M600 0V700M720 0V700M840 0V700M960 0V700M1080 0V700"/>
+  </g>
+  <g fill="none" stroke="#9ef3ff" stroke-width="3" opacity="0.25">
+    <circle cx="600" cy="350" r="95"/>
+    <circle cx="600" cy="350" r="190"/>
+    <circle cx="600" cy="350" r="285"/>
+    <circle cx="600" cy="350" r="380"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" opacity="0.32">
+    <path d="M145 80 428 155 505 332 372 535 152 620"/>
+    <path d="M505 332 735 220 1035 275 1095 610"/>
+    <path d="M428 155 735 220 870 70"/>
+  </g>
+  <g fill="none" stroke-linecap="round" filter="url(#glow)">
+    <path d="M70 510 C240 340 380 315 550 365 S840 505 1130 175" stroke="url(#route)" stroke-width="10"/>
+    <path d="M120 160 C305 220 380 470 610 430 S870 250 1090 410" stroke="#5fd2c2" stroke-width="6" opacity="0.9"/>
+    <path d="M260 650 C330 455 520 430 710 290 S940 135 1110 75" stroke="#d98aa8" stroke-width="6" opacity="0.9"/>
+  </g>
+  <g fill="#eef1f7" stroke="#080b12" stroke-width="4">
+    <circle cx="550" cy="365" r="12"/>
+    <circle cx="735" cy="220" r="12"/>
+    <circle cx="610" cy="430" r="12"/>
+    <circle cx="870" cy="250" r="12"/>
+  </g>
+  <g font-family="JetBrains Mono, ui-monospace, monospace" letter-spacing="3" text-transform="uppercase">
+    <text x="64" y="92" fill="#e8b04b" font-size="30">MINA CEZAIRLI</text>
+    <text x="64" y="136" fill="#eef1f7" font-size="48" font-weight="700">AIRSPACE STRUCTURE</text>
+    <text x="66" y="180" fill="#9aa6bb" font-size="24">controller mental models · sectors · trajectories</text>
+  </g>
+</svg>
