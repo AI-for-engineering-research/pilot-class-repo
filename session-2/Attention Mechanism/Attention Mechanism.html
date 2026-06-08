@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Attention Mechanism — Interactive</title>
+<link rel="stylesheet" href="lib/katex.min.css">
+<style>
+:root{
+  --bg:#0b0f17; --panel:#121826; --panel2:#0e1422; --ink:#eef2f8; --muted:#9aa7bd; --line:#243049;
+  --q:#3b82f6; --k:#10b981; --v:#f59e0b; --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+  --base:16px; --h1:34px; --h2:23px; --maxw:1080px; --radius:16px;
+  --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:
+   radial-gradient(1200px 600px at 80% -10%,#16213a 0%,transparent 60%),
+   radial-gradient(900px 500px at -10% 10%,#1a1330 0%,transparent 55%),var(--bg);
+   color:var(--ink);font-family:var(--sans);font-size:var(--base);line-height:1.55;-webkit-font-smoothing:antialiased}
+body.presenter{--base:19px;--h1:42px;--h2:28px}
+a{color:#7cb0ff;text-decoration:none}a:hover{text-decoration:underline}
+.bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;padding:11px 22px;
+  background:rgba(11,15,23,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;letter-spacing:.2px}.brand small{color:var(--muted);font-weight:500}
+.spacer{flex:1}
+.toggle{border:1px solid var(--line);background:#0e1422;border-radius:9px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--muted)}
+.toggle.on{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+main{max-width:var(--maxw);margin:0 auto;padding:20px 22px 90px}
+.hero h1{font-size:var(--h1);line-height:1.1;margin:.3em 0 .15em;letter-spacing:-.6px;
+  background:linear-gradient(90deg,#fff,#bcd2ff 60%,#cdb6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{color:var(--muted);max-width:780px;font-size:calc(var(--base)+1px)}
+.legendline{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0 0;font-size:13.5px;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.act{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin:22px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.act h2{font-size:var(--h2);margin:.1em 0 .2em;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+.act h2 .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;font-size:15px;font-weight:800;color:#fff}
+.point{color:var(--ink);background:rgba(124,176,255,.08);border-left:3px solid #7cb0ff;border-radius:0 8px 8px 0;
+  padding:8px 12px;margin:8px 0 14px;font-size:15px}
+.acthead{display:flex;align-items:flex-start;gap:12px}.acthead .spacer{flex:1}
+.expand{border:1px solid var(--line);background:#0e1422;color:var(--muted);border-radius:9px;padding:6px 11px;cursor:pointer;font-size:13px;white-space:nowrap}
+.expand:hover{color:#fff;border-color:#3b82f6}
+.try{font-size:13.5px;color:var(--muted);margin-top:12px}.try b{color:#cfe0ff}
+.flag{display:inline-block;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#fbbf24;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
+.stage{margin-top:6px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:6px 0 14px}
+.ctl{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.ctl .v{font-family:var(--mono);color:var(--ink);font-size:14px}
+input[type=range]{width:230px;accent-color:#3b82f6}
+.switch{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.switch button{background:#0e1422;color:var(--muted);border:0;padding:7px 12px;cursor:pointer;font-size:13px}
+.switch button.on{background:#1d4ed8;color:#fff}
+.btn{border:1px solid var(--line);background:#0e1422;color:var(--ink);border-radius:9px;padding:7px 12px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:#3b82f6}
+canvas{display:block;width:100%;border-radius:12px}
+#c3flow{height:300px} #c3heat{height:240px}
+.act.expanded #c3flow,.act.expanded #c3heat{height:48vh}
+.act.expanded .stage{max-width:1200px;margin:0 auto}
+/* Act 3 fullscreen: controls to the right sidebar, visuals + fingerprints fit one screen */
+#act3.expanded .stage{display:grid;grid-template-columns:minmax(0,1fr) 296px;grid-auto-rows:min-content;gap:10px 22px;align-content:start;max-width:none}
+#act3.expanded .controls{grid-column:2;grid-row:1/4;flex-direction:column;align-items:stretch;gap:13px;align-self:start;background:rgba(18,24,38,.55);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0}
+#act3.expanded .controls .ctl{width:100%}
+#act3.expanded .controls input[type=range],#act3.expanded .controls select,#act3.expanded .controls .switch{width:100%}
+#act3.expanded .controls .switch{display:flex}
+#act3.expanded .tokens{grid-column:1;margin:4px 0 0}
+#act3.expanded .grid2{grid-column:1;margin:0}
+#act3.expanded #resPanel{grid-column:1;margin:0}
+#act3.expanded .try{display:none}
+#act3.expanded #c3nn{display:none}
+#act3.expanded #c3flow,#act3.expanded #c3heat{height:33vh}
+#act3.expanded .respanel{padding:12px 14px}
+#act3.expanded .respanel canvas.strip{height:52px}
+.grid2{display:grid;grid-template-columns:1.4fr .9fr;gap:18px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.tokens{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.tk{padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:#0e1422;cursor:pointer;font-size:15px;font-family:var(--mono)}
+.tk.q{border-color:var(--q);box-shadow:0 0 0 2px rgba(59,130,246,.3) inset;color:#cfe0ff}
+.tk.masked{opacity:.32}
+.eqbox{background:#0c1220;border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;text-align:center}
+.simpl li{margin:8px 0}.simpl b{color:#fff}
+.ref{font-size:13.5px;color:var(--muted)}.ref li{margin:4px 0}
+.pill{font-family:var(--mono);font-size:13px;background:#0c1220;border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+.act.expanded{position:fixed;inset:0;z-index:300;margin:0;border-radius:0;overflow:auto}
+body.has-expanded{overflow:hidden}
+.relbox{position:relative}
+.nnout{margin-top:10px;font-size:14px}
+.nnout b{color:#fbbf24}
+.respanel{margin-top:16px;background:#0c1220;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.respanel .rphead{font-size:13.5px;color:var(--muted);margin-bottom:6px}
+.respanel .rphead b{color:#cfe0ff}
+.respanel .striplab{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin:9px 0 3px}
+.respanel canvas.strip{height:34px;width:100%;display:block;border-radius:6px;border:1px solid var(--line)}
+.respanel .nums{font-family:var(--mono);font-size:12.5px;color:#cbd5e1;margin-top:11px;overflow-x:auto;white-space:nowrap}
+.respanel .stats{font-size:13px;color:var(--muted);margin-top:8px}
+.respanel .stats b{color:#fbbf24}
+#act3.expanded .respanel canvas.strip{height:64px}
+.coda .formula{font-size:20px}
+.headstrip{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.headstrip .hh{flex:1;min-width:90px;background:#0c1220;border:1px solid var(--line);border-radius:8px;padding:8px}
+.headstrip .hh canvas{height:60px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="brand">The Attention Mechanism <small>· Session 2 · Mix = weighted blend of values</small></div>
+  <div class="spacer"></div>
+  <button class="toggle" id="presBtn" title="Larger type for projecting">Presenter mode</button>
+</div>
+
+<main>
+  <div class="hero">
+    <h1>Attention: a token<br>reaches across the sentence.</h1>
+    <p class="sub">A token <b>scores</b> every other token by alignment, <b>focuses</b> those scores into a soft distribution with softmax, then <b>mixes</b> the tokens' values in those proportions. This demo isolates that mechanism end-to-end on a real sentence — driven by <b>GPT-2's actual attention</b> across all 12 layers and heads, or by GloVe word vectors as a transparent stand-in. Click <b>⤢ Expand</b> to blow the panel up for the room.</p>
+    <div class="legendline">
+      <span><span class="dot" style="background:var(--q)"></span>Query — what a token is looking for</span>
+      <span><span class="dot" style="background:var(--k)"></span>Key — what a token offers</span>
+      <span><span class="dot" style="background:var(--v)"></span>Value — what gets moved</span>
+    </div>
+  </div>
+
+  <!-- ===== ATTENTION — MIX ===== -->
+  <section class="act" id="act3">
+    <div class="acthead">
+      <div>
+        <h2><span class="n" style="background:var(--v)">A</span>Mix — a weighted blend of values</h2>
+        <div class="point"><b>The point:</b> the output at a position is the attention-weighted average of the value vectors, <span class="pill">out<sub>i</sub> = Σ<sub>j</sub> a<sub>ij</sub> v<sub>j</sub></span> — a soft lookup. A <em>causal mask</em> blocks the future so a token can only read what came before it. With real GPT-2 weights, the same machinery produces recognisable head behaviours — previous-token heads, attention sinks, induction.</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="expand" data-target="act3">⤢ Expand</button>
+    </div>
+    <div class="stage">
+      <div class="controls">
+        <div class="ctl">sentence
+          <select id="sentSel" class="btn"></select></div>
+        <div class="ctl">causal mask
+          <span class="switch"><button id="maskOn" class="on">on</button><button id="maskOff">off</button></span></div>
+        <button class="btn" id="randproj" title="Apply a random query/key projection">↻ randomize W<sub>Q</sub>,W<sub>K</sub></button>
+        <button class="btn" id="resetproj">identity W</button>
+      </div>
+      <div class="tokens" id="tokRow"></div>
+      <div class="grid2">
+        <div class="relbox">
+          <canvas id="c3flow" height="300"></canvas>
+        </div>
+        <div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">attention matrix &nbsp;<span style="font-family:var(--mono)">a<sub>ij</sub> = softmax<sub>j</sub>(q<sub>i</sub>·k<sub>j</sub>/√d)</span></div>
+          <canvas id="c3heat" height="220"></canvas>
+          <div class="nnout" id="c3nn"></div>
+        </div>
+      </div>
+      <div id="resPanel" class="respanel" style="display:none"></div>
+      <div class="try"><b>Try:</b> click a token to make it the query; toggle the mask; then hit <b>randomize W<sub>Q</sub>,W<sub>K</sub></b> — the pattern changes completely, because <em>what counts as “relevant” is learned</em>. Switch to <b>GPT-2 (real)</b> and slide layer/head, or jump to a famous head. <span class="flag">GloVe mode uses W<sub>Q</sub>=W<sub>K</sub>=W<sub>V</sub>=I on real vectors — a transparent stand-in for learned projections</span></div>
+    </div>
+  </section>
+
+  <!-- ===== CODA ===== -->
+  <section class="act coda" id="coda">
+    <h2><span class="n" style="background:linear-gradient(135deg,var(--q),#8b5cf6,var(--v))">Σ</span>Putting it together</h2>
+    <div class="eqbox formula" id="codaEq" style="margin:6px 0 4px"></div>
+    <p style="color:var(--muted);font-size:14px;margin:10px 0 4px">
+      <span style="color:#7cb0ff">Q Kᵀ</span> is the <em>score</em> · <span style="color:#c4b5fd">softmax(·/√d<sub>k</sub>)</span> is the <em>focus</em> · multiplying by <span style="color:#fbbf24">V</span> is the <em>mix</em> you've been driving above. One <em>head</em> does this once. <b>Multi-head attention</b> runs h of them in parallel on different learned subspaces, then concatenates and projects:</p>
+    <div class="eqbox" id="codaMH" style="margin:6px 0"></div>
+    <div class="headstrip" id="headstrip"></div>
+    <p class="try">Different heads specialise — one tracks syntax, another coreference, another position. Slide through GPT-2's heads above to find them.</p>
+  </section>
+
+  <!-- ===== SIMPLIFICATIONS ===== -->
+  <section class="act" id="simpl" style="border-color:rgba(245,158,11,.35)">
+    <h2><span class="n" style="background:var(--warn)">⚠</span>What we're simplifying</h2>
+    <ul class="simpl">
+      <li><b>GloVe mode uses identity projections on static word vectors.</b> We set W<sub>Q</sub>=W<sub>K</sub>=W<sub>V</sub>=I and use GloVe vectors, so attention there is driven by raw word similarity. <em>Real heads learn</em> W<sub>Q</sub>,W<sub>K</sub>,W<sub>V</sub> (the “randomize” button hints at this), operate inside the residual stream, and add an output projection W<sub>O</sub>. The <b>GPT-2 (real)</b> mode shows the genuine learned attention.</li>
+      <li><b>One head at a time.</b> Real layers run many heads in parallel (the coda), and the interesting behaviour — induction, in-context learning — comes from <em>composing</em> attention across layers.</li>
+      <li><b>LayerNorm and the MLP are out of frame.</b> This demo isolates the attention sub-layer; the residual-stream panel (GPT-2 mode) shows how a token's vector is reshaped as context folds in, but the full block has more moving parts.</li>
+    </ul>
+  </section>
+
+  <section class="act ref" id="refs" style="background:none;box-shadow:none">
+    <h2 style="font-size:18px">Sources</h2>
+    <ul>
+      <li>Vaswani et al. (2017). <i>Attention Is All You Need.</i> NeurIPS. — scaled dot-product attention.</li>
+      <li>Bahdanau, Cho &amp; Bengio (2015). <i>Neural Machine Translation by Jointly Learning to Align and Translate.</i> ICLR. — attention's origin.</li>
+      <li>Elhage et al. (2021). <i>A Mathematical Framework for Transformer Circuits.</i> Anthropic. — the QK / OV decomposition; previous-token and induction heads.</li>
+    </ul>
+    <p class="note" style="color:var(--muted)">Vectors: GloVe 100-d via npm <span class="pill">wink-embeddings-sg-100d</span> (MIT; Stanford GloVe, PDDL). Real attention exported from <span class="pill">gpt2-small</span>. Math: KaTeX. Runs entirely from this folder — no build, no network.</p>
+  </section>
+</main>
+
+<script src="lib/katex.min.js"></script>
+<script src="data/glove.js"></script>
+<script src="data/sentences.js"></script>
+<script src="data/gpt2_attention.js" onerror="window.__noattn=1"></script>
+<script>
+"use strict";
+/* ---------- shared ---------- */
+const G = window.GLOVE, DIM = G.dims;
+const IDX = new Map(G.pool_words.map((w,i)=>[w,i]));
+const NORM = G.vectors.map(v=>Math.hypot.apply(null,v));
+const vecOf = w => { const i=IDX.get(w); return i==null?null:G.vectors[i]; };
+function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;}
+function softmax(z){const m=Math.max.apply(null,z);let s=0;const e=z.map(x=>{const v=Math.exp(x-m);s+=v;return v;});return e.map(v=>v/s);}
+function nnWord(target,k){const tn=Math.hypot.apply(null,target)||1e-9;let best=[];for(let i=0;i<G.vectors.length;i++){best.push([G.pool_words[i],dot(G.vectors[i],target)/(NORM[i]*tn)]);}best.sort((a,b)=>b[1]-a[1]);return best.slice(0,k);}
+function katexInto(el,tex,disp){try{katex.render(tex,el,{throwOnError:false,displayMode:!!disp});}catch(e){el.textContent=tex;}}
+const dpr=()=>window.devicePixelRatio||1;
+function fitCanvas(cv){const r=cv.getBoundingClientRect();cv.width=Math.max(2,r.width*dpr());cv.height=Math.max(2,(r.height|| 300)*dpr());const ctx=cv.getContext("2d");ctx.setTransform(dpr(),0,0,dpr(),0,0);return {w:r.width,h:(r.height||300),ctx};}
+
+/* ---------- expand / fullscreen ---------- */
+const REDRAW={};
+function registerRedraw(id,fn){REDRAW[id]=fn;}
+document.querySelectorAll(".expand").forEach(b=>{
+  b.addEventListener("click",()=>{
+    const sec=document.getElementById(b.dataset.target);
+    const exp=sec.classList.toggle("expanded");
+    document.body.classList.toggle("has-expanded",exp);
+    b.textContent=exp?"⤡ Close":"⤢ Expand";
+    setTimeout(()=>REDRAW[b.dataset.target] && REDRAW[b.dataset.target](),40);
+  });
+});
+window.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".act.expanded").forEach(s=>{s.classList.remove("expanded");const b=s.querySelector(".expand");if(b)b.textContent="⤢ Expand";});document.body.classList.remove("has-expanded");}});
+document.getElementById("presBtn").onclick=function(){document.body.classList.toggle("presenter");this.classList.toggle("on");setTimeout(redrawAll,40);};
+function redrawAll(){for(const k in REDRAW)REDRAW[k]();}
+window.addEventListener("resize",()=>setTimeout(redrawAll,80));
+
+/* =======================================================================
+   MIX — attention (values + masking on a real sentence)
+======================================================================= */
+(function(){
+  const HASG=!!window.GPT2_ATTN;
+  const sel=document.getElementById("sentSel"), tokRow=document.getElementById("tokRow");
+  const flow=document.getElementById("c3flow"), heat=document.getElementById("c3heat"), nn=document.getElementById("c3nn");
+  const controls=document.querySelector("#act3 .controls");
+  const maskCtl=document.getElementById("maskOn").closest(".ctl");
+  const randBtn=document.getElementById("randproj"), resetBtn=document.getElementById("resetproj");
+  window.SENTENCES.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.text;sel.appendChild(o);});
+  let mode=HASG?"gpt2":"glove";
+  let si=0, qi=0, mask=true, proj=null, curLayer=0, curHead=0;
+  let words=[], X=[], A=[], dashOff=0;
+  let layVal=null,headVal=null,layCtl=null,headCtl=null,bGpt=null,bGlove=null;
+  if(HASG){
+    const nL=window.GPT2_ATTN.num_layers,nH=window.GPT2_ATTN.num_heads;
+    const mk=label=>{const c=document.createElement("div");c.className="ctl";const t=document.createElement("span");t.textContent=label;c.appendChild(t);return c;};
+    const mw=mk("vectors"); const sw=document.createElement("span");sw.className="switch";
+    bGpt=document.createElement("button");bGpt.textContent="GPT-2 (real)";bGpt.className="on";
+    bGlove=document.createElement("button");bGlove.textContent="GloVe (identity)";
+    sw.appendChild(bGpt);sw.appendChild(bGlove);mw.appendChild(sw);
+    layCtl=mk("layer"); layVal=document.createElement("span");layVal.className="v";layVal.textContent="0";layCtl.firstChild.after(layVal);
+    const lr=document.createElement("input");lr.type="range";lr.min=0;lr.max=nL-1;lr.value=0;lr.style.width="150px";layCtl.appendChild(lr);
+    headCtl=mk("head"); headVal=document.createElement("span");headVal.className="v";headVal.textContent="0";headCtl.firstChild.after(headVal);
+    const hr=document.createElement("input");hr.type="range";hr.min=0;hr.max=nH-1;hr.value=0;hr.style.width="150px";headCtl.appendChild(hr);
+    controls.appendChild(mw);controls.appendChild(layCtl);controls.appendChild(headCtl);
+    const jump=(L,H)=>{curLayer=L;curHead=H;lr.value=L;hr.value=H;layVal.textContent=L;headVal.textContent=H;qi=-1;loadSentence();};
+    const pc=mk("famous heads"); const prow=document.createElement("div");prow.style.cssText="display:flex;gap:6px;flex-wrap:wrap";
+    [["↩ prev-token L4·H11",4,11],["⤓ sink L1·H2",1,2],["● self L0·H1",0,1]].forEach(p=>{const b=document.createElement("button");b.className="btn";b.style.fontSize="12px";b.textContent=p[0];b.onclick=()=>jump(p[1],p[2]);prow.appendChild(b);});
+    pc.appendChild(prow); controls.appendChild(pc);
+    lr.addEventListener("input",()=>{curLayer=+lr.value;layVal.textContent=curLayer;recompute();});
+    hr.addEventListener("input",()=>{curHead=+hr.value;headVal.textContent=curHead;recompute();});
+    bGpt.onclick=()=>setMode("gpt2"); bGlove.onclick=()=>setMode("glove");
+  }
+  function setMode(m){
+    mode=m; const g=(m==="gpt2");
+    if(bGpt){bGpt.classList.toggle("on",g);bGlove.classList.toggle("on",!g);}
+    if(layCtl){layCtl.style.display=g?"":"none";headCtl.style.display=g?"":"none";}
+    if(maskCtl)maskCtl.style.display=g?"none":"";
+    if(randBtn)randBtn.style.display=g?"none":""; if(resetBtn)resetBtn.style.display=g?"none":"";
+    {const rp=document.getElementById("resPanel"); if(rp) rp.style.display=(g&&hasHidden)?"":"none";}
+    mask=true; if(!g){document.getElementById("maskOn").classList.add("on");document.getElementById("maskOff").classList.remove("on");proj=null;}
+    qi=-1; loadSentence();
+  }
+  const lbl=w=>{w=String(w==null?"":w);return w.trim()||w;};
+  const dispTok=w=>mode==="gpt2"?String(w).replace(/^ /,"·"):w;
+  function loadSentence(){
+    if(mode==="gpt2"){words=window.GPT2_ATTN.sentences[si].tokens.slice();}
+    else{words=window.SENTENCES[si].words.slice();X=words.map(w=>vecOf(w)||new Array(DIM).fill(0));}
+    if(qi<0||qi>=words.length)qi=words.length-1;
+    recompute();
+  }
+  // ----- residual-stream vector panel (only if hidden states were exported) -----
+  const hasHidden = HASG && !!window.GPT2_ATTN.hidden && !!window.GPT2_ATTN.d_model;
+  let refC=null,liveC=null,numsEl=null,statsEl=null,rpHead=null,rpLiveLab=null;
+  function buildResidual(){
+    const rp=document.getElementById("resPanel"); if(!rp||!hasHidden) return;
+    rp.innerHTML="";
+    rpHead=document.createElement("div");rpHead.className="rphead";rp.appendChild(rpHead);
+    const l1=document.createElement("div");l1.className="striplab";l1.innerHTML='<span>layer 0 — context-free embedding (reference)</span><span>each cell = one of the '+window.GPT2_ATTN.d_model+' dimensions</span>';rp.appendChild(l1);
+    refC=document.createElement("canvas");refC.className="strip";rp.appendChild(refC);
+    rpLiveLab=document.createElement("div");rpLiveLab.className="striplab";rp.appendChild(rpLiveLab);
+    liveC=document.createElement("canvas");liveC.className="strip";rp.appendChild(liveC);
+    numsEl=document.createElement("div");numsEl.className="nums";rp.appendChild(numsEl);
+    statsEl=document.createElement("div");statsEl.className="stats";rp.appendChild(statsEl);
+  }
+  function drawStrip(cv,vec){
+    const {w,h,ctx}=fitCanvas(cv); ctx.clearRect(0,0,w,h);
+    const n=vec.length; let ss=0; for(let i=0;i<n;i++) ss+=vec[i]*vec[i];
+    const scale=2.5*Math.sqrt(ss/n)+1e-6, bw=w/n;
+    for(let i=0;i<n;i++){ let t=vec[i]/scale; t=t>1?1:t<-1?-1:t;
+      ctx.fillStyle = t>=0 ? `rgba(239,68,68,${0.12+0.88*t})` : `rgba(59,130,246,${0.12+0.88*(-t)})`;
+      ctx.fillRect(i*bw,0,bw>0.6?bw:0.6,h);
+    }
+  }
+  function updateResidual(){
+    if(!hasHidden||mode!=="gpt2"||!refC) return;
+    const H=window.GPT2_ATTN.hidden[si], emb=H[0][qi], vec=H[curLayer+1][qi];
+    rpHead.innerHTML=`Residual-stream vector for <b>“${lbl(words[qi])}”</b> — ${window.GPT2_ATTN.d_model}-dimensional. Slide the <b>layer</b> and watch its meaning transform.`;
+    rpLiveLab.innerHTML=`<span>after layer ${curLayer} — context has been folded in</span><span></span>`;
+    drawStrip(refC,emb); drawStrip(liveC,vec);
+    const f6=vec.slice(0,6).map(x=>x.toFixed(2)).join(", "), l6=vec.slice(-6).map(x=>x.toFixed(2)).join(", ");
+    numsEl.innerHTML=`[ ${f6}, <span style="color:#64748b">⋯ ${vec.length-12} more dims ⋯</span>, ${l6} ]`;
+    const nv=Math.hypot.apply(null,vec), ne=Math.hypot.apply(null,emb), cos=dot(vec,emb)/((nv*ne)||1e-9);
+    statsEl.innerHTML=`‖v‖ = <b>${nv.toFixed(1)}</b> (was ${ne.toFixed(1)} at the embedding) · cosine to the layer-0 embedding: <b>${cos.toFixed(2)}</b> <span style="color:#64748b">— lower means more reshaped by context</span>`;
+  }
+  function applyProj(v,W){ if(!W) return v; const out=new Array(DIM).fill(0); for(let a=0;a<DIM;a++){let s=0;const row=W[a];for(let b=0;b<DIM;b++)s+=row[b]*v[b];out[a]=s;} return out;}
+  function recompute(){
+    const n=words.length;
+    if(mode==="gpt2"){ A=window.GPT2_ATTN.attn[si][curLayer][curHead]; mask=true; }
+    else { const Q=X.map(v=>applyProj(v,proj&&proj.Q)), K=X.map(v=>applyProj(v,proj&&proj.K)); A=[];
+      for(let i=0;i<n;i++){const sc=[];for(let j=0;j<n;j++){ if(mask&&j>i)sc.push(-1e9); else sc.push(dot(Q[i],K[j])/Math.sqrt(DIM)); }A.push(softmax(sc));} }
+    renderTokens(); drawHeat(); drawFlow(); computeOut(); if(hasHidden) updateResidual();
+  }
+  function renderTokens(){
+    tokRow.innerHTML="";
+    words.forEach((w,j)=>{const d=document.createElement("div");d.className="tk"+(j===qi?" q":"")+((mask&&j>qi)?" masked":"");d.textContent=dispTok(w);
+      d.onclick=()=>{qi=j;renderTokens();drawFlow();drawHeat();computeOut();if(hasHidden)updateResidual();};tokRow.appendChild(d);});
+  }
+  function charHead(){
+    const n=words.length;let prev=0,first=0,self=0,tot=0;
+    for(let i=1;i<n;i++){tot++;const r=A[i];let m=0;for(let j=0;j<=i;j++)if(r[j]>r[m])m=j;if(m===i-1)prev++;if(m===0)first++;if(m===i)self++;}
+    if(!tot)return"a short sequence";
+    if(prev/tot>=0.6)return"looks like a previous-token head";
+    if(first/tot>=0.6)return"attends to the first token (an “attention sink”)";
+    if(self/tot>=0.6)return"mostly attends to the token itself";
+    return"a mixed, content-specific pattern";
+  }
+  function computeOut(){
+    const top=[...A[qi].map((a,j)=>[words[j],a])].sort((x,y)=>y[1]-x[1]).slice(0,3).filter(x=>x[1]>0.001);
+    if(mode==="gpt2"){
+      const NAMED={"4,11":["Previous-token head","every token looks one step back — the reliable building block that composes across layers into <b>induction heads</b> (in-context copying)"],"1,2":["Attention sink","nearly all weight lands on the first token — a “park here” default many heads fall back on"],"0,1":["Self / pass-through head","each token attends to itself, carrying its own content forward"]};
+      const named=NAMED[curLayer+","+curHead];
+      const desc=named?`<b style="color:#fbbf24">${named[0]}</b> — ${named[1]}`:charHead();
+      nn.innerHTML=`<b style="color:#fbbf24">GPT-2 small · L${curLayer} · H${curHead}</b> — ${desc}.<br>`+
+        `From <b style="color:#cfe0ff">“${lbl(words[qi])}”</b> it reads: `+top.map(t=>`<span class="pill">${lbl(t[0])} ${(t[1]*100|0)}%</span>`).join(" ")+
+        `<br><span style="color:var(--muted)">The head writes a <b>new vector at the “${lbl(words[qi])}” position</b> (the blue node on the right) — same slot, now carrying that context. That's why the right-hand node is labelled with the query word.</span>`;
+      return;
+    }
+    const n=words.length, out=new Array(DIM).fill(0), V=X; // W_V=I
+    for(let j=0;j<n;j++){const a=A[qi][j];for(let d=0;d<DIM;d++)out[d]+=a*V[j][d];}
+    const near=nnWord(out,4).filter(x=>x[0]!==words[qi]).slice(0,3);
+    nn.innerHTML=`Query <b style="color:#cfe0ff">“${words[qi]}”</b> attends mostly to: `+
+      top.map(t=>`<span class="pill">${t[0]} ${(t[1]*100|0)}%</span>`).join(" ")+
+      `<br>Its blended output vector is nearest to: `+near.map(x=>`<b>${x[0]}</b>`).join(", ")+
+      ` <span style="color:var(--muted)">— the representation has moved toward what it read.</span>`;
+  }
+  function drawHeat(){
+    const {w,h,ctx}=fitCanvas(heat); ctx.clearRect(0,0,w,h); const n=words.length;
+    const pad=46, cell=Math.min((w-pad)/n,(h-pad)/n), x0=pad, y0=18;
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+      const a=A[i][j]; const masked=mask&&j>i;
+      ctx.fillStyle= masked? "rgba(255,255,255,.03)" : `rgba(245,158,11,${0.08+0.92*a})`;
+      ctx.fillRect(x0+j*cell,y0+i*cell,cell-1.5,cell-1.5);
+      if(i===qi){ctx.strokeStyle="#3b82f6";ctx.lineWidth=2;ctx.strokeRect(x0+j*cell+1,y0+i*cell+1,cell-3.5,cell-3.5);}
+    }
+    ctx.fillStyle="#9aa7bd";ctx.font="10px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
+    for(let j=0;j<n;j++){ctx.save();ctx.translate(x0+j*cell+cell/2,y0-4);ctx.rotate(-Math.PI/4);ctx.fillText(lbl(words[j]).slice(0,6),0,0);ctx.restore();}
+    for(let i=0;i<n;i++){ctx.fillStyle=i===qi?"#cfe0ff":"#9aa7bd";ctx.fillText(lbl(words[i]).slice(0,6),2,y0+i*cell+cell/2+3);}
+  }
+  function drawFlow(){
+    const {w,h,ctx}=fitCanvas(flow); ctx.clearRect(0,0,w,h); const n=words.length;
+    const leftX=70, rightX=w-90, gap=(h-40)/Math.max(1,n-1);
+    const yj=j=>20+gap*j;
+    const outY=h/2;
+    // value nodes (left) + query/output (right)
+    for(let j=0;j<n;j++){
+      const a=A[qi][j]; const masked=mask&&j>qi;
+      // beam
+      if(!masked && a>0.005){
+        ctx.strokeStyle=`rgba(245,158,11,${0.15+0.8*a})`; ctx.lineWidth=1+10*a; ctx.setLineDash([7,7]);ctx.lineDashOffset=-dashOff;
+        ctx.beginPath();ctx.moveTo(leftX+8,yj(j));ctx.bezierCurveTo((leftX+rightX)/2,yj(j),(leftX+rightX)/2,outY,rightX-8,outY);ctx.stroke();ctx.setLineDash([]);
+      }
+      ctx.fillStyle=masked?"rgba(255,255,255,.12)":"#f59e0b";ctx.beginPath();ctx.arc(leftX,yj(j),5,0,7);ctx.fill();
+      ctx.fillStyle=masked?"rgba(255,255,255,.25)":"#e9d8a6";ctx.font="12px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";ctx.textAlign="right";ctx.fillText(lbl(words[j]),leftX-10,yj(j)+4);ctx.textAlign="left";
+    }
+    // output node
+    const g=ctx.createRadialGradient(rightX,outY,0,rightX,outY,16);g.addColorStop(0,"rgba(59,130,246,.6)");g.addColorStop(1,"rgba(59,130,246,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(rightX,outY,16,0,7);ctx.fill();
+    ctx.fillStyle="#3b82f6";ctx.beginPath();ctx.arc(rightX,outY,6,0,7);ctx.fill();
+    ctx.textAlign="center";
+    ctx.fillStyle="#cfe0ff";ctx.font="bold 12px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";ctx.fillText("“"+lbl(words[qi])+"” updated",rightX,outY-20);
+    ctx.fillStyle="#9aa7bd";ctx.font="10px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";ctx.fillText("(same position · new vector)",rightX,outY+24);
+    ctx.textAlign="left";
+    ctx.fillStyle="#9aa7bd";ctx.font="11px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";ctx.fillText("values (every token)",leftX-44,14);
+  }
+  sel.onchange=()=>{si=+sel.value;proj=null;qi=-1;loadSentence();};
+  document.getElementById("maskOn").onclick=function(){mask=true;this.classList.add("on");document.getElementById("maskOff").classList.remove("on");renderTokens();recompute();};
+  document.getElementById("maskOff").onclick=function(){mask=false;this.classList.add("on");document.getElementById("maskOn").classList.remove("on");renderTokens();recompute();};
+  document.getElementById("randproj").onclick=()=>{proj={Q:randMat(),K:randMat()};recompute();};
+  document.getElementById("resetproj").onclick=()=>{proj=null;recompute();};
+  function randMat(){const s=()=>{let a=(Math.random()*1e9)|0;return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};};const rnd=s();function rn(){let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)/Math.sqrt(DIM);}return Array.from({length:DIM},()=>Array.from({length:DIM},rn));}
+  registerRedraw("act3",()=>{drawHeat();drawFlow();if(hasHidden)updateResidual();});
+  if(hasHidden) buildResidual();
+  if(HASG) setMode("gpt2"); else loadSentence();
+  window.__act3flow=()=>{dashOff=(dashOff+0.6)%14;drawFlow();};
+})();
+
+/* ---------- coda formulas + multi-head strip ---------- */
+katexInto(document.getElementById("codaEq"),
+ `\\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}\\!\\left(\\dfrac{\\textcolor{#7cb0ff}{QK^{\\top}}}{\\textcolor{#c4b5fd}{\\sqrt{d_k}}}\\right)\\textcolor{#fbbf24}{V}`,true);
+katexInto(document.getElementById("codaMH"),
+ `\\mathrm{MultiHead}=\\mathrm{Concat}(\\mathrm{head}_1,\\dots,\\mathrm{head}_h)\\,W_O,\\quad \\mathrm{head}_i=\\mathrm{Attention}(QW_i^Q,KW_i^K,VW_i^V)`,true);
+(function(){const host=document.getElementById("headstrip");for(let hh=0;hh<4;hh++){const d=document.createElement("div");d.className="hh";const c=document.createElement("canvas");d.appendChild(c);const lab=document.createElement("div");lab.style.cssText="font-size:11px;color:#9aa7bd;text-align:center;margin-top:4px";lab.textContent="head "+(hh+1);d.appendChild(lab);host.appendChild(d);
+  setTimeout(()=>{const r=c.getBoundingClientRect();c.width=r.width*dpr();c.height=60*dpr();const ctx=c.getContext("2d");ctx.setTransform(dpr(),0,0,dpr(),0,0);const n=5,cell=Math.min(r.width,60)/n;const seed=mulberry(hh*99+7);
+    // random-ish lower-triangular pattern per head
+    for(let i=0;i<n;i++){let tot=0;const r2=[];for(let j=0;j<n;j++){const val=j<=i?seed():0;r2.push(val);tot+=val;}for(let j=0;j<n;j++){const a=tot?r2[j]/tot:0;ctx.fillStyle=`rgba(245,158,11,${0.1+0.9*a})`;ctx.fillRect(j*cell+2,i*cell+2,cell-2,cell-2);}}
+  },60);
+}
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+})();
+
+/* ---------- single rAF loop ---------- */
+(function loop(){
+  if(window.__act3flow)window.__act3flow();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
