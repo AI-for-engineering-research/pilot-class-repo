@@ -30,7 +30,7 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}          /* one screen, no scrolling */
+html,body{height:100%;overflow-x:hidden;overflow-y:auto}   /* fills screen, scrolls when content overflows */
 body{
   font-family:var(--body);
   background:var(--bg-0);
@@ -70,7 +70,7 @@ body{
 
 /* ---------- Shell ---------- */
 .wrap{
-  position:relative;height:100vh;height:100svh;
+  position:relative;min-height:100vh;min-height:100svh;
   display:flex;flex-direction:column;
   padding:var(--pad);gap:clamp(14px,2.3vh,28px);
 }
