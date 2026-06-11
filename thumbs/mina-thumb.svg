@@ -1,60 +1,126 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
-  <title id="title">Mina Cezairli portfolio thumbnail</title>
-  <desc id="desc">A minimal black-and-white computer-inspired airspace map with strategic cyan and yellow accents.</desc>
+  <title id="title">Still from Mina Cezairli's airspace structure demo</title>
+  <desc id="desc">A dark minimal interactive-demo style airspace map with controls, sectors, routes, trajectories, narrative hotspots, and a support suggestion.</desc>
   <defs>
     <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#050505"/>
-      <stop offset="0.58" stop-color="#111111"/>
-      <stop offset="1" stop-color="#050505"/>
+      <stop offset="0.55" stop-color="#101010"/>
+      <stop offset="1" stop-color="#060606"/>
     </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+    <filter id="cyanGlow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="5" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.55"/>
     </filter>
   </defs>
 
   <rect width="1200" height="700" fill="#050505"/>
-  <rect x="42" y="42" width="1116" height="616" fill="url(#screen)" stroke="#f4f4f0" stroke-opacity="0.55" stroke-width="2"/>
-
-  <g opacity="0.13" stroke="#f4f4f0" stroke-width="1">
-    <path d="M42 130H1158M42 218H1158M42 306H1158M42 394H1158M42 482H1158M42 570H1158"/>
-    <path d="M134 42V658M226 42V658M318 42V658M410 42V658M502 42V658M594 42V658M686 42V658M778 42V658M870 42V658M962 42V658M1054 42V658"/>
+  <g opacity="0.09" stroke="#f4f4f0" stroke-width="1">
+    <path d="M0 70H1200M0 140H1200M0 210H1200M0 280H1200M0 350H1200M0 420H1200M0 490H1200M0 560H1200M0 630H1200"/>
+    <path d="M80 0V700M160 0V700M240 0V700M320 0V700M400 0V700M480 0V700M560 0V700M640 0V700M720 0V700M800 0V700M880 0V700M960 0V700M1040 0V700M1120 0V700"/>
   </g>
 
-  <g fill="none" stroke="#f4f4f0" stroke-opacity="0.18" stroke-width="3">
-    <circle cx="612" cy="360" r="92"/>
-    <circle cx="612" cy="360" r="184"/>
-    <circle cx="612" cy="360" r="276"/>
-    <circle cx="612" cy="360" r="368"/>
+  <g filter="url(#softShadow)">
+    <rect x="62" y="62" width="1076" height="576" fill="#0d0d0d" stroke="#f4f4f0" stroke-opacity="0.35" stroke-width="2"/>
+    <rect x="62" y="62" width="1076" height="44" fill="#151515" stroke="#f4f4f0" stroke-opacity="0.22" stroke-width="2"/>
+    <g fill="#050505" stroke-width="2">
+      <circle cx="92" cy="84" r="7" stroke="#737373"/>
+      <circle cx="118" cy="84" r="7" stroke="#00e5ff"/>
+      <circle cx="144" cy="84" r="7" stroke="#ffcc00"/>
+    </g>
+    <text x="178" y="90" font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="17" fill="#a7a7a7" letter-spacing="2">airspace-demo.app</text>
   </g>
 
-  <g fill="none" stroke="#f4f4f0" stroke-width="5" stroke-linejoin="miter" opacity="0.35">
-    <path d="M135 115 420 168 505 332 363 555 145 612"/>
-    <path d="M505 332 742 212 1030 274 1086 604"/>
-    <path d="M420 168 742 212 890 82"/>
+  <!-- left controls from the demo -->
+  <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" text-transform="uppercase" letter-spacing="1.6">
+    <rect x="92" y="146" width="184" height="406" fill="#0a0a0a" stroke="#f4f4f0" stroke-opacity="0.18"/>
+    <text x="112" y="180" fill="#00e5ff" font-size="15" font-weight="700">layers</text>
+    <g font-size="13" fill="#f4f4f0">
+      <rect x="114" y="210" width="13" height="13" fill="#00e5ff"/><text x="140" y="222">routes</text>
+      <rect x="114" y="252" width="13" height="13" fill="#ffcc00"/><text x="140" y="264">narratives</text>
+      <rect x="114" y="294" width="13" height="13" fill="#f4f4f0"/><text x="140" y="306">trajectories</text>
+      <rect x="114" y="336" width="13" height="13" fill="none" stroke="#737373"/><text x="140" y="348" fill="#a7a7a7">support</text>
+    </g>
+    <text x="112" y="410" fill="#a7a7a7" font-size="12">traffic density</text>
+    <line x1="114" y1="442" x2="242" y2="442" stroke="#737373" stroke-width="2"/>
+    <circle cx="190" cy="442" r="8" fill="#00e5ff"/>
   </g>
 
-  <g fill="none" stroke-linecap="square" filter="url(#glow)">
-    <path d="M82 512 C248 342 392 316 556 365 S838 500 1120 170" stroke="#00e5ff" stroke-width="9"/>
-    <path d="M126 166 C306 222 386 468 612 430 S876 254 1085 408" stroke="#f4f4f0" stroke-width="5" opacity="0.8"/>
-    <path d="M262 646 C334 456 520 430 710 290 S940 136 1108 76" stroke="#ffcc00" stroke-width="5" opacity="0.82"/>
+  <!-- main map card -->
+  <g>
+    <rect x="304" y="146" width="594" height="406" fill="url(#screen)" stroke="#f4f4f0" stroke-opacity="0.42" stroke-width="2"/>
+    <g opacity="0.12" stroke="#f4f4f0" stroke-width="1">
+      <path d="M304 204H898M304 262H898M304 320H898M304 378H898M304 436H898M304 494H898"/>
+      <path d="M364 146V552M424 146V552M484 146V552M544 146V552M604 146V552M664 146V552M724 146V552M784 146V552M844 146V552"/>
+    </g>
+
+    <!-- sectors -->
+    <g fill="rgba(255,255,255,0.025)" stroke="#f4f4f0" stroke-opacity="0.22" stroke-width="2">
+      <path d="M334 194 500 176 538 326 454 532 334 500Z"/>
+      <path d="M500 176 692 204 686 358 538 326Z"/>
+      <path d="M538 326 686 358 862 304 868 512 454 532Z"/>
+    </g>
+    <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="17" fill="#737373" font-weight="700">
+      <text x="376" y="220">S1</text>
+      <text x="585" y="230">S2</text>
+      <text x="650" y="488">S3</text>
+    </g>
+
+    <!-- published routes -->
+    <g fill="none" stroke="#f4f4f0" stroke-width="5" stroke-dasharray="9 10" stroke-linecap="square" opacity="0.76">
+      <path d="M360 442 C458 388 530 344 630 332 S790 308 850 238"/>
+      <path d="M370 266 C470 286 526 338 622 352 S780 396 846 444"/>
+      <path d="M444 500 C482 410 558 384 648 360 S758 306 820 336"/>
+    </g>
+
+    <!-- flown trajectories -->
+    <g fill="none" stroke="#00e5ff" stroke-width="3" opacity="0.72" stroke-linecap="round" filter="url(#cyanGlow)">
+      <path d="M350 428 C452 392 540 354 650 336 C738 322 806 274 856 236"/>
+      <path d="M356 454 C462 398 548 346 648 326 C734 306 800 260 838 220"/>
+      <path d="M382 258 C474 282 548 334 638 350 C728 372 794 416 852 452"/>
+      <path d="M380 286 C484 296 556 344 654 364 C738 388 804 420 840 444"/>
+    </g>
+
+    <!-- narrative hotspots -->
+    <g filter="url(#cyanGlow)">
+      <circle cx="638" cy="344" r="18" fill="#ffcc00" stroke="#050505" stroke-width="4"/>
+      <circle cx="726" cy="366" r="18" fill="#ffcc00" stroke="#050505" stroke-width="4"/>
+    </g>
+    <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="13" font-weight="700" fill="#f4f4f0" paint-order="stroke" stroke="#050505" stroke-width="5">
+      <text x="664" y="350">merge + workload</text>
+      <text x="752" y="372">coordination</text>
+    </g>
+
+    <!-- support sketch -->
+    <g fill="none" stroke="#ffcc00" stroke-width="4" stroke-linecap="square" opacity="0.88">
+      <path d="M420 474 C510 408 614 402 718 344 C780 306 820 306 862 320"/>
+      <path d="M862 320 840 309M862 320 842 334"/>
+    </g>
   </g>
 
-  <g fill="#050505" stroke-width="4">
-    <circle cx="556" cy="365" r="13" stroke="#00e5ff"/>
-    <circle cx="742" cy="212" r="13" stroke="#f4f4f0"/>
-    <circle cx="612" cy="430" r="13" stroke="#ffcc00"/>
-    <circle cx="876" cy="254" r="13" stroke="#f4f4f0"/>
+  <!-- right insight card -->
+  <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace">
+    <rect x="926" y="146" width="182" height="406" fill="#0a0a0a" stroke="#f4f4f0" stroke-opacity="0.18"/>
+    <text x="948" y="182" fill="#f4f4f0" font-size="20" font-weight="800">combined</text>
+    <text x="948" y="207" fill="#f4f4f0" font-size="20" font-weight="800">view</text>
+    <text x="948" y="244" fill="#a7a7a7" font-size="13">formal routes,</text>
+    <text x="948" y="264" fill="#a7a7a7" font-size="13">flown paths,</text>
+    <text x="948" y="284" fill="#a7a7a7" font-size="13">and text cues</text>
+    <line x1="948" y1="330" x2="1086" y2="330" stroke="#f4f4f0" stroke-opacity="0.16"/>
+    <text x="948" y="366" fill="#737373" font-size="12" letter-spacing="1.6">flows</text>
+    <text x="1056" y="366" fill="#00e5ff" font-size="15" font-weight="800">4</text>
+    <line x1="948" y1="390" x2="1086" y2="390" stroke="#f4f4f0" stroke-opacity="0.16"/>
+    <text x="948" y="426" fill="#737373" font-size="12" letter-spacing="1.6">hotspots</text>
+    <text x="1056" y="426" fill="#ffcc00" font-size="15" font-weight="800">2</text>
+    <line x1="948" y1="450" x2="1086" y2="450" stroke="#f4f4f0" stroke-opacity="0.16"/>
+    <text x="948" y="486" fill="#737373" font-size="12" letter-spacing="1.6">flex</text>
+    <text x="1024" y="486" fill="#00e5ff" font-size="15" font-weight="800">med</text>
   </g>
 
-  <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" letter-spacing="3" text-transform="uppercase">
-    <text x="78" y="104" fill="#00e5ff" font-size="24" font-weight="700">&gt; MINA CEZAIRLI</text>
-    <text x="78" y="156" fill="#f4f4f0" font-size="50" font-weight="800">AIRSPACE STRUCTURE</text>
-    <text x="80" y="196" fill="#a7a7a7" font-size="22">controller mental models / sectors / trajectories</text>
-  </g>
-
-  <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" font-size="16" fill="#737373" letter-spacing="2">
-    <text x="78" y="620">profile.exe</text>
-    <text x="972" y="620" fill="#ffcc00">FL240</text>
+  <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" letter-spacing="2" text-transform="uppercase">
+    <text x="82" y="610" fill="#737373" font-size="15">interactive demo still</text>
+    <text x="916" y="610" fill="#00e5ff" font-size="15">airspace structure</text>
   </g>
 </svg>
