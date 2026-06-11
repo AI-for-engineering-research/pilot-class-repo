@@ -28,6 +28,16 @@ if [ -d session-1 ]; then
   [ -f session-1/assets/making-of.mp4 ] && cp session-1/assets/making-of.mp4 "$OUT/session-1/assets/"
 fi
 
+# Self-contained interactive lessons (HTML + vendored libs/data in one folder).
+if [ -d "session-2/Attention Mechanism" ]; then
+  mkdir -p "$OUT/session-2"
+  cp -R "session-2/Attention Mechanism" "$OUT/session-2/"
+fi
+if [ -d "session-3/How Transformers Learn" ]; then
+  mkdir -p "$OUT/session-3"
+  cp -R "session-3/How Transformers Learn" "$OUT/session-3/"
+fi
+
 # Student-project thumbnails, once they exist:
 cp -R thumbs "$OUT/thumbs"
 
