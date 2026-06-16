@@ -37,6 +37,10 @@ if [ -d "session-3/How Transformers Learn" ]; then
   mkdir -p "$OUT/session-3"
   cp -R "session-3/How Transformers Learn" "$OUT/session-3/"
 fi
+if [ -d "session-4/Testing What You Can't Predict" ]; then
+  mkdir -p "$OUT/session-4"
+  cp -R "session-4/Testing What You Can't Predict" "$OUT/session-4/"
+fi
 
 # Student-project thumbnails, once they exist:
 cp -R thumbs "$OUT/thumbs"
