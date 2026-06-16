@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testing What You Can't Predict — Session 4</title>
+
+<!-- Fonts load from Google Fonts when online; falls back gracefully offline. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#080b12;
+  --ink:#eef1f7;
+  --muted:#9aa6bb;
+  --faint:#586173;
+  --line:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.035);
+  --card-bd:rgba(255,255,255,.09);
+  --panel:#0a0e16;
+  --amber:#e8b04b;
+  --teal:#5fd2c2;
+  --indigo:#8ea0e8;
+  --rose:#d98aa8;
+  --good:#62d98a;
+  --bad:#e06a6a;
+  --display:"Bricolage Grotesque","Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%}
+body{font-family:var(--body);font-size:17px;background:var(--bg);color:var(--ink);overflow:hidden;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;user-select:none;}
+
+/* ---------- Living background (same family as sessions 1 & 3) ---------- */
+.bg{position:fixed;inset:-28%;z-index:-3;
+  background:
+    radial-gradient(46% 58% at 22% 26%, rgba(72,92,168,.38), transparent 70%),
+    radial-gradient(52% 54% at 80% 74%, rgba(26,118,118,.30), transparent 72%),
+    radial-gradient(40% 48% at 62% 14%, rgba(122,74,140,.20), transparent 70%),
+    radial-gradient(60% 60% at 50% 110%, rgba(40,52,92,.38), transparent 70%),
+    var(--bg);
+  animation:drift 26s ease-in-out infinite alternate;will-change:transform;}
+@keyframes drift{
+  0%  {transform:translate3d(-5%,-3%,0) scale(1.10);}
+  50% {transform:translate3d(4%,4%,0)   scale(1.16);}
+  100%{transform:translate3d(-2%,3%,0)  scale(1.10);}
+}
+.grain{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.vignette{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,.45) 100%);}
+
+/* ---------- Top progress bar ---------- */
+.progress{position:fixed;top:0;left:0;height:3px;z-index:60;width:0;
+  background:linear-gradient(90deg,var(--amber),var(--teal));transition:width .45s ease;}
+
+/* ---------- Stage / pan-zoom camera ---------- */
+#stage{position:fixed;inset:0;overflow:hidden;cursor:grab;}
+#stage.grabbing{cursor:grabbing;}
+#camera{position:absolute;left:0;top:0;width:6400px;height:4600px;transform-origin:0 0;
+  transition:transform .85s cubic-bezier(.7,0,.18,1);will-change:transform;}
+
+/* ---------- Edges (SVG) ---------- */
+#edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+.edge{fill:none;stroke-width:2.2;opacity:.22;stroke-dasharray:7 5;
+  transition:opacity .4s, stroke-width .4s;}
+.edge.active{opacity:.85;stroke-width:3;stroke-dasharray:none;}
+
+/* ---------- Nodes ---------- */
+.node{position:absolute;border-radius:16px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:18px 20px;border:1.5px solid var(--card-bd);
+  background:var(--card);backdrop-filter:blur(7px);
+  transition:box-shadow .3s, transform .3s, border-color .3s;}
+.node:hover{transform:scale(1.035);}
+.node.active{transform:scale(1.05);}
+.node-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:7px;}
+.node-label{font-family:var(--display);font-size:23px;font-weight:700;letter-spacing:-.01em;line-height:1.16;}
+.node-sub{font-size:15px;font-weight:400;color:var(--muted);margin-top:7px;line-height:1.4;max-width:230px;}
+.node-icon{font-size:30px;margin-bottom:8px;line-height:1;}
+
+/* root */
+.node-root{border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, rgba(142,160,232,.16), rgba(8,11,18,.92));
+  border-color:rgba(142,160,232,.4);
+  box-shadow:0 0 70px 8px rgba(142,160,232,.16), inset 0 0 0 1px rgba(255,255,255,.04);}
+.node-root .node-label{font-size:27px;}
+.node-root.active{box-shadow:0 0 90px 18px rgba(142,160,232,.34), 0 0 0 2px var(--indigo);}
+
+/* branch tints */
+.node-teal{box-shadow:0 0 22px 1px rgba(95,210,194,.07);}
+.node-teal.active,.node-teal:hover{box-shadow:0 0 34px 6px rgba(95,210,194,.22);border-color:var(--teal);}
+.node-teal .node-label{color:var(--teal);}
+.node-teal .node-eyebrow{color:var(--teal);}
+
+.node-amber{box-shadow:0 0 22px 1px rgba(232,176,75,.07);}
+.node-amber.active,.node-amber:hover{box-shadow:0 0 34px 6px rgba(232,176,75,.22);border-color:var(--amber);}
+.node-amber .node-label{color:var(--amber);}
+.node-amber .node-eyebrow{color:var(--amber);}
+
+.node-indigo{box-shadow:0 0 22px 1px rgba(142,160,232,.07);}
+.node-indigo.active,.node-indigo:hover{box-shadow:0 0 34px 6px rgba(142,160,232,.22);border-color:var(--indigo);}
+.node-indigo .node-label{color:var(--indigo);}
+.node-indigo .node-eyebrow{color:var(--indigo);}
+
+.node-good{box-shadow:0 0 22px 1px rgba(98,217,138,.07);}
+.node-good.active,.node-good:hover{box-shadow:0 0 34px 6px rgba(98,217,138,.22);border-color:var(--good);}
+.node-good .node-label{color:var(--good);}
+.node-good .node-eyebrow{color:var(--good);}
+
+.node-rose{box-shadow:0 0 22px 1px rgba(217,138,168,.07);}
+.node-rose.active,.node-rose:hover{box-shadow:0 0 34px 6px rgba(217,138,168,.22);border-color:var(--rose);}
+.node-rose .node-label{color:var(--rose);}
+.node-rose .node-eyebrow{color:var(--rose);}
+
+/* ---------- Detail panel (DOCKED RIGHT; bottom on narrow) ---------- */
+#panel{position:fixed;top:18px;bottom:18px;right:18px;
+  width:clamp(380px,40vw,580px);
+  background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
+  padding:22px 24px;backdrop-filter:blur(14px);
+  background-color:rgba(10,14,22,.82);
+  box-shadow:0 24px 80px rgba(0,0,0,.55);
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transform:translateX(14px);
+  transition:opacity .4s, transform .4s;z-index:80;}
+#panel.visible{opacity:1;pointer-events:auto;transform:none;}
+#panel-close{position:absolute;top:13px;right:14px;width:34px;height:34px;border-radius:9px;
+  border:1px solid var(--card-bd);background:rgba(255,255,255,.04);color:var(--muted);
+  font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:border-color .2s, color .2s, background .2s;z-index:2;}
+#panel-close:hover{border-color:var(--bad);color:var(--ink);background:rgba(224,106,106,.12);}
+.panel-eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--amber);display:flex;align-items:center;gap:12px;margin-bottom:11px;flex:0 0 auto;padding-right:40px;}
+.panel-eyebrow::before{content:"";width:34px;height:1px;background:currentColor;opacity:.7;flex:0 0 auto;}
+.panel-title{font-family:var(--display);font-size:26px;font-weight:750;line-height:1.12;
+  letter-spacing:-.015em;margin-bottom:14px;flex:0 0 auto;}
+/* The body is a flex column: content scrolls; the source line pins to the bottom. */
+.panel-body{font-size:16.5px;line-height:1.6;color:var(--muted);flex:1 1 auto;min-height:0;
+  display:flex;flex-direction:column;}
+.panel-main{flex:1 1 auto;overflow-y:auto;padding-right:6px;min-height:0;}
+.panel-main::-webkit-scrollbar{width:9px;}
+.panel-main::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:6px;}
+.panel-main::-webkit-scrollbar-track{background:transparent;}
+/* Source line: small, muted, separated, pinned at the bottom of the box. */
+.panel-source{flex:0 0 auto;font-family:var(--mono);font-size:11.5px;line-height:1.5;
+  color:var(--faint);margin-top:13px;padding-top:11px;border-top:1px solid var(--card-bd);}
+.panel-source a{color:var(--muted);}
+.panel-source a:hover{color:var(--ink);}
+.panel-body strong{color:var(--ink);font-weight:600;}
+.panel-body em{color:var(--ink);font-style:normal;border-bottom:1px dotted var(--faint);}
+.panel-body a{color:var(--teal);text-decoration:none;border-bottom:1px solid rgba(95,210,194,.4);}
+.panel-body a:hover{color:var(--ink);border-bottom-color:var(--ink);}
+.panel-body p{margin:0 0 12px;}
+.panel-body ul,.panel-body ol{margin:8px 0 12px 20px;line-height:1.6;}
+.panel-body li{margin-bottom:6px;}
+.panel-body code{font-family:var(--mono);font-size:14px;background:var(--panel);
+  border:1px solid var(--card-bd);border-radius:5px;padding:1px 6px;color:var(--indigo);}
+/* Pseudocode block: monospace, no syntax highlighting (language-agnostic). */
+.panel-body pre{font-family:var(--mono);font-size:13.5px;background:#060a12;
+  border:1px solid var(--card-bd);border-left:3px solid rgba(95,210,194,.4);
+  border-radius:11px;padding:14px 16px;margin:6px 0 13px;
+  overflow-x:auto;line-height:1.6;color:#c3cdde;white-space:pre-wrap;word-break:break-word;}
+.panel-body pre::-webkit-scrollbar{height:8px;}
+.panel-body pre::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:6px;}
+.repo-note{font-family:var(--mono);font-size:12.5px;color:var(--faint);margin:2px 0 6px;line-height:1.5;}
+.repo-note code{font-size:12px;}
+
+/* ---------- Flowchart (inline, in panel) ---------- */
+.flow{display:flex;flex-direction:column;gap:0;margin:6px 0 13px;}
+.flow-row{display:flex;align-items:center;gap:10px;}
+.flow-box{flex:1;background:var(--panel);border:1px solid var(--card-bd);border-radius:10px;
+  padding:9px 12px;font-size:14px;line-height:1.4;color:var(--ink);}
+.flow-box .fl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--faint);display:block;margin-bottom:3px;}
+.flow-box.q{border-color:rgba(142,160,232,.45);}
+.flow-box.yes{border-color:rgba(98,217,138,.45);}
+.flow-box.no{border-color:rgba(224,106,106,.45);}
+.flow-arrow{align-self:center;color:var(--faint);font-family:var(--mono);font-size:18px;
+  padding:4px 0;text-align:center;}
+.flow-arrow.lbl{font-size:11px;}
+.flow-branch{display:flex;gap:9px;}
+.flow-branch .flow-box{font-size:13px;padding:7px 9px;}
+.flow-loop{border:1px dashed rgba(232,176,75,.4);border-radius:12px;padding:11px;margin:4px 0;
+  position:relative;}
+.flow-loop .loop-tag{position:absolute;top:-9px;left:12px;background:var(--bg);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--amber);padding:0 7px;}
+.pattern-grid{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px;}
+.pattern-grid span{font-family:var(--mono);font-size:13px;color:var(--teal);
+  background:rgba(95,210,194,.08);border:1px solid rgba(95,210,194,.28);
+  border-radius:6px;padding:3px 8px;}
+
+/* ---------- Bottom-left mini panel: legend + minimap ---------- */
+#minimap{position:fixed;left:18px;bottom:18px;z-index:90;
+  background:rgba(10,14,22,.82);border:1px solid var(--card-bd);border-radius:13px;
+  padding:11px 12px;backdrop-filter:blur(10px);width:206px;}
+#minimap .mm-head{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+#minimap .mm-head::after{content:"";flex:1;height:1px;background:var(--card-bd);}
+#mm-canvas{display:block;width:182px;height:130px;border-radius:8px;cursor:pointer;
+  background:rgba(0,0,0,.25);border:1px solid var(--card-bd);}
+
+/* ---------- Bottom-center chrome: nav + hint ----------
+   Spans left:0 → right:0 by default. When the panel is open, JS sets
+   --chrome-right to the panel's left edge so the chrome stays in the visible
+   left band. z-index is above the panel so it is always clickable. */
+#chrome{position:fixed;bottom:18px;left:0;right:var(--chrome-right,0px);z-index:140;
+  display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:none;
+  transition:right .4s;}
+#nav{display:flex;align-items:center;gap:11px;pointer-events:auto;}
+.nav-btn{width:48px;height:48px;border-radius:12px;border:1px solid var(--card-bd);
+  background:rgba(10,14,22,.88);color:var(--ink);font-size:19px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);
+  transition:border-color .2s, background .2s, transform .15s;}
+.nav-btn:hover{border-color:var(--teal);background:rgba(95,210,194,.1);transform:scale(1.06);}
+.nav-btn:active{transform:scale(.94);}
+#progdots{display:flex;align-items:center;gap:5px;padding:8px 13px;
+  background:rgba(10,14,22,.88);border:1px solid var(--card-bd);border-radius:22px;
+  backdrop-filter:blur(8px);}
+.pdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16);cursor:pointer;
+  transition:background .3s, transform .3s;}
+.pdot.active{background:var(--ink);transform:scale(1.4);}
+.pdot.visited{background:rgba(255,255,255,.34);}
+#hint{font-family:var(--mono);font-size:13px;color:var(--faint);letter-spacing:.04em;
+  pointer-events:none;background:rgba(8,11,18,.55);padding:3px 12px;border-radius:8px;
+  white-space:nowrap;}
+#hint b{color:var(--muted);font-weight:500;}
+
+/* ---------- Title strip (minimal; map shows behind it; clears on first interaction) ---------- */
+#title{position:fixed;left:0;right:0;top:0;z-index:200;display:flex;flex-direction:column;
+  align-items:center;gap:9px;text-align:center;padding:26px 20px 30px;pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,11,18,.92) 0%, rgba(8,11,18,.78) 55%, transparent 100%);
+  transition:opacity .7s, transform .7s;}
+#title.hidden{opacity:0;transform:translateY(-18px);pointer-events:none;}
+.title-eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--amber);display:flex;align-items:center;gap:13px;}
+.title-eyebrow::before,.title-eyebrow::after{content:"";width:34px;height:1px;background:var(--amber);opacity:.7;}
+#title h1{font-family:var(--display);font-weight:800;line-height:1.04;letter-spacing:-.02em;
+  font-size:clamp(30px,5.2vh,56px);max-width:20ch;
+  background:linear-gradient(95deg,var(--ink) 0%,var(--ink) 40%,var(--amber) 70%,var(--teal) 96%);
+  background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;}
+.title-sub{font-size:15px;color:var(--muted);max-width:62ch;line-height:1.55;}
+.title-hint{font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:.06em;margin-top:4px;}
+
+/* ---------- Narrow screens: dock panel to bottom band ---------- */
+@media (max-width:900px){
+  #panel{top:auto;left:14px;right:14px;bottom:14px;width:auto;
+    height:54vh;max-height:54vh;transform:translateY(14px);}
+  #panel.visible{transform:none;}
+  #minimap{display:none;}
+  #chrome{bottom:auto;top:88px;left:0;right:0;}
+  #title h1{font-size:clamp(26px,7vw,44px);}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .bg{animation:none;}
+  #camera{transition:transform .25s ease;}
+  .node,.node:hover,.node.active{transition:box-shadow .2s, border-color .2s;transform:none;}
+  #panel,#title,.progress{transition:opacity .2s;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="grain"></div>
+<div class="vignette"></div>
+<div class="progress" id="progress"></div>
+
+<!-- Title strip (map is visible behind it; clears on first interaction) -->
+<div id="title">
+  <span class="title-eyebrow">MIT · Agentic AI for Engineering Research · Session 4</span>
+  <h1>Testing What You Can't Predict</h1>
+  <p class="title-sub">Property-based and metamorphic tests for code where you can't write down the right answer in advance — and why the test output is the agent's main feedback signal.</p>
+  <p class="title-hint">press → or click a node to begin</p>
+</div>
+
+<!-- Pan-zoom stage -->
+<div id="stage">
+  <div id="camera">
+    <svg id="edges" xmlns="http://www.w3.org/2000/svg"></svg>
+    <!-- nodes injected by JS -->
+  </div>
+</div>
+
+<!-- Docked detail panel (opens on click only) -->
+<div id="panel">
+  <button id="panel-close" title="Close (Esc)" aria-label="Close panel">×</button>
+  <div class="panel-eyebrow" id="panel-eyebrow"></div>
+  <div class="panel-title" id="panel-title"></div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<!-- Bottom-left minimap -->
+<div id="minimap">
+  <div class="mm-head">Map</div>
+  <canvas id="mm-canvas" width="364" height="260"></canvas>
+</div>
+
+<!-- Bottom chrome -->
+<div id="chrome">
+  <div id="nav">
+    <button class="nav-btn" id="btn-prev" title="Previous (←)">←</button>
+    <div id="progdots"></div>
+    <button class="nav-btn" id="btn-next" title="Next (→)">→</button>
+  </div>
+  <div id="hint"><b>← →</b> tour · <b>click</b> a node for details · <b>drag</b> to pan · <b>scroll</b> to zoom · <b>F</b> fullscreen</div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================================
+   NODE DATA
+   Node colors group related ideas (they are not labelled or lettered):
+   indigo = the agentic loop, teal = the two tools, amber = the examples,
+   green = how to choose a property, rose = the closing result + assignment.
+   Coordinates are laid out so no two cards overlap (verified at runtime by
+   checkOverlaps()).
+   ========================================================================== */
+
+const NODES = [
+  /* ---------------- ROOT ---------------- */
+  {
+    id:"root", x:3200, y:2300, w:260, h:260, cls:"node-root",
+    icon:"⟳", eyebrow:"Session 4", label:"Testing What\nYou Can't Predict",
+    sub:"The map starts here",
+    pEyebrow:"CORE IDEA", pTitle:"When you can't write down the right answer",
+    body:`
+<div class="panel-main">
+<p>Most tests pin one input to one known output: <code>assert f(2) == 4</code>. A lot of research code can't be tested that way — you run a simulation and you don't know the number it should print.</p>
+<ul>
+  <li>The <strong>oracle problem</strong>: no cheap, independent source of the right answer.</li>
+  <li>In an agentic loop the model writes code, runs tests, reads failures, retries.</li>
+  <li><strong>The test output is the agent's main feedback signal.</strong></li>
+  <li><strong>Property test</strong>: state a rule for every input; the library hunts for breaks.</li>
+  <li><strong>Metamorphic test</strong>: state a relation between two runs; no exact answer needed.</li>
+</ul>
+<p>The tour starts with why this matters for agents, then the two tools, then examples you can run, then how to pick a property, then your assignment. Arrow keys to move. Click a node for details. Press <strong>F</strong> for fullscreen.</p>
+</div>`
+  },
+
+  /* ============ TEAL: the two tools (what & why) ============ */
+  {
+    id:"branch-why", x:780, y:2300, w:230, h:130, cls:"node-teal",
+    icon:"❓", eyebrow:"", label:"The Problem &\nThe Two Tools",
+    sub:"oracle · properties · metamorphic",
+    pEyebrow:"THE PROBLEM AND THE TWO TOOLS", pTitle:"The oracle problem, and the two tools that survive it",
+    body:`
+<div class="panel-main">
+<p>No cheap expected answer means an equality assertion has nothing to compare against. Test <em>relationships</em> instead of exact values.</p>
+<ul>
+  <li><strong>Property-based:</strong> state a rule for a whole class of inputs.</li>
+  <li>A library generates many inputs and tries to falsify it.</li>
+  <li><strong>Metamorphic:</strong> state how the output should change between two runs.</li>
+  <li>Scale, permute, or invert an input; check the output moved as the math says.</li>
+</ul>
+<p>The next three nodes give the plain definitions and origins. Read them in order.</p>
+</div>`
+  },
+  {
+    id:"why-pbt", x:1500, y:1500, w:230, h:128, cls:"node-teal",
+    icon:"∀", eyebrow:"", label:"Property-Based\nTesting",
+    sub:"for all inputs, this holds",
+    pEyebrow:"PROPERTY-BASED TESTING", pTitle:"State a property; let the library hunt for counterexamples",
+    body:`
+<div class="panel-main">
+<p>Write a rule for a whole class of inputs; the library generates hundreds and tries to break it.</p>
+<ul>
+  <li>Origin: <strong>QuickCheck</strong> (Claessen &amp; Hughes, ICFP 2000).</li>
+  <li>Python: <a href="https://hypothesis.readthedocs.io" target="_blank" rel="noopener">Hypothesis</a>, with a <code>/hypothesis</code> Claude Code plugin.</li>
+  <li><strong>Integrated shrinking:</strong> a failure is reduced to a minimal failing case.</li>
+  <li>A 2-element list beats a random 500-element one — and an agent can act on it.</li>
+  <li>Julia: hand-roll with the <code>Test</code> stdlib, or use <a href="https://github.com/Seelengrab/Supposition.jl" target="_blank" rel="noopener">Supposition.jl</a> (active).</li>
+  <li>PropCheck.jl exists too, now in maintenance mode.</li>
+</ul>
+</div>
+<p class="panel-source">Source · <a href="https://doi.org/10.1145/351240.351266" target="_blank" rel="noopener">QuickCheck (Claessen &amp; Hughes, 2000)</a> · <a href="https://hypothesis.readthedocs.io" target="_blank" rel="noopener">Hypothesis docs</a></p>`
+  },
+  {
+    id:"why-mt", x:1500, y:2300, w:230, h:128, cls:"node-teal",
+    icon:"↔", eyebrow:"", label:"Metamorphic\nTesting",
+    sub:"a relation between two runs",
+    pEyebrow:"METAMORPHIC TESTING", pTitle:"Test a relationship between runs when you have no oracle",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>Tests a relation between several runs of the same code.</li>
+  <li>No correct answer needed for any single run.</li>
+  <li>Only need: how the output should change when the input changes.</li>
+  <li>Coined by <strong>Chen, Cheung &amp; Yiu (1998)</strong>.</li>
+  <li>The workhorse for scientific code: you know the physics, not the answer.</li>
+</ul>
+<p>Relations you can state without solving anything:</p>
+<ul>
+  <li>Double the moles at fixed <em>T, V</em> → pressure doubles.</li>
+  <li>°C → K → °C recovers the original (round-trip).</li>
+  <li>Compress a gas adiabatically → temperature rises, never falls.</li>
+  <li>Permute a list before the median → median unchanged.</li>
+</ul>
+</div>
+<p class="panel-source">Source · <a href="https://www.hillelwayne.com/post/metamorphic-testing/" target="_blank" rel="noopener">Hillel Wayne, "Metamorphic Testing"</a></p>`
+  },
+  {
+    id:"why-vs", x:1500, y:3100, w:230, h:128, cls:"node-teal",
+    icon:"≟", eyebrow:"", label:"Property vs.\nExample",
+    sub:"one rule beats many examples",
+    pEyebrow:"THE CONTRAST", pTitle:"An example tests one point; a property tests a class",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>An example checks only the inputs you thought of.</li>
+  <li>The input space is huge; the bug hides in the case you missed.</li>
+  <li>A property states the rule once; the library finds the break.</li>
+</ul>
+<pre>// example: only as good as the cases you imagined
+require median([1, 2]) == 1.5      // catches even-length — if you remembered it
+
+// property: shifting every value by c shifts the median by c
+for many random (list xs, number c):
+    shifted = median(each x in xs replaced by x + c)
+    require shifted ≈ median(xs) + c
+    else report: "shift property broke: xs=…, c=… expected median+c=… got=…"</pre>
+<p>You write the rule; the library finds the counterexample.</p>
+</div>`
+  },
+
+  /* ============ INDIGO: the agentic loop (visited first in the tour) ============ */
+  {
+    id:"branch-loop", x:3200, y:1300, w:230, h:130, cls:"node-indigo",
+    icon:"🤖", eyebrow:"", label:"The Agentic\nFeedback Loop",
+    sub:"tests are the signal",
+    pEyebrow:"WHY THIS MATTERS FOR AGENTS", pTitle:"Why the test output is the agent's feedback signal",
+    body:`
+<div class="panel-main">
+<p>Start here: in an agentic loop the model writes code, runs tests, reads the output as text, and retries.</p>
+<ul>
+  <li>The failure message is most of what the agent has to work with.</li>
+  <li>So the test output is a channel between you and the agent. It deserves the same care as the code.</li>
+  <li><strong>The trap:</strong> if the agent writes both the code and an example test, a weak test just re-encodes its own wrong answer — the test agrees with the bug. That circle is why a green suite is not proof.</li>
+  <li>A metamorphic relation breaks the circle: it checks the physics, not the agent's guess.</li>
+</ul>
+<p>The next two nodes draw the loop and show what agents copy from your repo.</p>
+</div>`
+  },
+  {
+    id:"loop-flow", x:2350, y:1300, w:235, h:130, cls:"node-indigo",
+    icon:"🔁", eyebrow:"", label:"Write → Run →\nRead → Fix",
+    sub:"flowchart of the loop",
+    pEyebrow:"FLOWCHART", pTitle:"The agentic feedback loop",
+    body:`
+<div class="panel-main">
+<p>The cycle the agent runs. The failure message is the arrow that feeds back in.</p>
+<div class="flow">
+  <div class="flow-loop">
+    <span class="loop-tag">repeat until tests pass</span>
+    <div class="flow-box"><span class="fl">Step 1</span>Write or edit the code</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-box"><span class="fl">Step 2</span>Run the tests</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-box q"><span class="fl">Step 3</span>Read the failure message — the main feedback signal</div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-box"><span class="fl">Step 4</span>Fix, then loop back to Step 1</div>
+  </div>
+  <div class="flow-arrow lbl">— but watch this branch —</div>
+  <div class="flow-box no"><span class="fl">Tests too weak?</span>They pass, yet the code is still wrong. A green suite is not proof; weak tests give the agent a false "done."</div>
+</div>
+<ul>
+  <li>A strong property test makes Step 3 useful.</li>
+  <li>It hands back a small counterexample, not "something failed."</li>
+  <li>When the agent writes the tests too, an example test can just re-encode its own wrong output — circular.</li>
+  <li>A metamorphic relation breaks that circle: it checks physics, not the agent's guess.</li>
+</ul>
+</div>
+<p class="panel-source">Source · <a href="https://simonwillison.net/2025/Sep/30/designing-agentic-loops/" target="_blank" rel="noopener">Simon Willison, "Designing agentic loops"</a></p>`
+  },
+  {
+    id:"loop-imitate", x:3200, y:500, w:235, h:130, cls:"node-indigo",
+    icon:"🪞", eyebrow:"", label:"Agents Imitate\nYour Tests",
+    sub:"give them examples to copy",
+    pEyebrow:"WHAT AGENTS COPY", pTitle:"Agents imitate the test style already in the codebase",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>Agents imitate the existing test style in a codebase.</li>
+  <li>With no property or metamorphic tests to copy, they tend to write plain one-input/one-output tests.</li>
+  <li>So seed the repo with a few property and metamorphic tests first.</li>
+  <li>The agent then copies that good style.</li>
+  <li>State it in the prompt or a skill file: "write at least one metamorphic property test using Hypothesis."</li>
+  <li>Examples plus the instruction shift what the agent writes.</li>
+</ul>
+</div>
+<p class="panel-source">Source · <a href="https://simonwillison.net/guides/agentic-engineering-patterns/first-run-the-tests/" target="_blank" rel="noopener">Simon Willison on agentic loops</a></p>`
+  },
+
+  /* ============ AMBER: the examples ============ */
+  {
+    id:"branch-code", x:4900, y:2300, w:235, h:130, cls:"node-amber",
+    icon:"⌨", eyebrow:"", label:"Five\nExamples",
+    sub:"each one a single property",
+    pEyebrow:"EXAMPLES", pTitle:"Five examples",
+    body:`
+<div class="panel-main">
+<p>Five examples, each a single property in the thermodynamics / gas-turbine domain. The nodes show the idea as pseudocode; the same properties are written out as runnable code in the repo.</p>
+<ul>
+  <li>Ideal gas, scaling: double the moles → double the pressure.</li>
+  <li>Ideal gas, Boyle's law: at fixed n, T the product P·V is constant.</li>
+  <li>Gas turbine (Brayton): efficiency rises with pressure ratio and stays in (0, 1).</li>
+  <li>Temperature: °C → K → °C recovers the original (round-trip).</li>
+  <li>A buggy adiabatic relation that a property catches.</li>
+</ul>
+<p class="repo-note">Runnable Python (Hypothesis), a no-library version, and Julia are in the repo: <code>examples/</code></p>
+</div>`
+  },
+  {
+    id:"code-gas-hyp", x:4900, y:1100, w:235, h:128, cls:"node-amber",
+    icon:"🧪", eyebrow:"", label:"Ideal Gas:\nScaling",
+    sub:"double the moles → double P",
+    pEyebrow:"EXAMPLE · IDEAL-GAS SCALING", pTitle:"Double the moles, double the pressure",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>The relation comes straight off <code>P = nRT / V</code>: at fixed T and V, pressure scales with the moles.</li>
+  <li>It is metamorphic, so no "right" pressure is needed — only that the two runs relate.</li>
+</ul>
+<pre>for many random (n, T, V):
+    p1 = pressure(n,  T, V)
+    p2 = pressure(2n, T, V)
+    require p2 ≈ 2·p1
+    else report: "scaling broke: n,T,V=… expected 2·p1=… got p2=…"</pre>
+<p>Hundreds of random (n, T, V) leave nowhere for a scaling mistake to hide.</p>
+<p class="repo-note">Runnable Python (Hypothesis), a no-library version, and Julia are in the repo: <code>examples/</code></p>
+</div>`
+  },
+  {
+    id:"code-gas-plain", x:5550, y:1700, w:235, h:128, cls:"node-amber",
+    icon:"🔧", eyebrow:"", label:"Ideal Gas:\nBoyle's Law",
+    sub:"at fixed n, T → P·V is constant",
+    pEyebrow:"EXAMPLE · ISOTHERMAL BOYLE", pTitle:"At fixed temperature, P·V stays constant",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>Hold n and T fixed; change the volume. Pressure must move so the product P·V is unchanged.</li>
+  <li>Again metamorphic: compare two runs, no single expected pressure.</li>
+</ul>
+<pre>for many random (n, T, V1, V2):
+    p1 = pressure(n, T, V1)
+    p2 = pressure(n, T, V2)
+    require p1·V1 ≈ p2·V2
+    else report: "Boyle broke: n,T,V1,V2=… P1·V1=… P2·V2=… (should be equal)"</pre>
+<p>This is the generate → check → report shape underneath any property-testing library.</p>
+<p class="repo-note">Runnable Python (Hypothesis), a no-library version, and Julia are in the repo: <code>examples/</code></p>
+</div>`
+  },
+  {
+    id:"code-turbine", x:5550, y:2300, w:235, h:128, cls:"node-amber",
+    icon:"🛞", eyebrow:"", label:"Gas Turbine:\nMonotonicity",
+    sub:"more pressure ratio → more efficiency",
+    pEyebrow:"EXAMPLE · BRAYTON EFFICIENCY", pTitle:"Efficiency rises with pressure ratio, and stays in (0, 1)",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>Two properties of the Brayton gas-turbine cycle, both pure physics.</li>
+  <li><strong>Monotonicity:</strong> more of an input never decreases the output. Here, a higher pressure ratio never lowers efficiency.</li>
+  <li><strong>Bound:</strong> an efficiency is a fraction, so it must land strictly between 0 and 1.</li>
+</ul>
+<pre>for many random (r1, r2, γ) with r2 > r1 > 1:
+    e1 = efficiency(r1, γ)
+    e2 = efficiency(r2, γ)
+    require e2 ≥ e1                 // monotonic in pressure ratio
+    require 0 < e1 < 1 and 0 < e2 < 1
+    else report: "Brayton broke: r1,r2,γ=… e1=… e2=… (need e2≥e1 and both in (0,1))"</pre>
+<p>Monotonicity catches a sign flip or a bad exponent that a single example would pass.</p>
+<p class="repo-note">Runnable Python (Hypothesis), a no-library version, and Julia are in the repo: <code>examples/</code></p>
+</div>`
+  },
+  {
+    id:"code-temp", x:5550, y:2900, w:235, h:128, cls:"node-amber",
+    icon:"🌡", eyebrow:"", label:"Temperature:\nRound-Trip",
+    sub:"°C → K → °C recovers the input",
+    pEyebrow:"EXAMPLE · ROUND-TRIP", pTitle:"Celsius → Kelvin → Celsius lands where it started",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>The cleanest metamorphic pattern: apply an operation and its inverse, land back on the input.</li>
+  <li>No expected value to compute — only that you return to where you started.</li>
+</ul>
+<pre>for many random C:
+    K   = celsius_to_kelvin(C)
+    out = kelvin_to_celsius(K)
+    require out ≈ C
+    else report: "round-trip broke: C=… → K=… → out=… (out should equal C)"</pre>
+<p>A round-trip catches an offset typed once but not undone in the reverse step.</p>
+<p class="repo-note">Runnable Python (Hypothesis), a no-library version, and Julia are in the repo: <code>examples/</code></p>
+</div>`
+  },
+  {
+    id:"code-buggy", x:4900, y:3500, w:235, h:128, cls:"node-amber",
+    icon:"🐞", eyebrow:"", label:"A Property\nCatches a Bug",
+    sub:"compression must raise temperature",
+    pEyebrow:"EXAMPLE · A BUG THE PROPERTY CATCHES", pTitle:"A property catching a planted bug",
+    body:`
+<div class="panel-main">
+<ul>
+  <li>Planted bug: an adiabatic relation with the volume ratio inverted.</li>
+  <li>It still returns a positive number, so a hand-picked example can pass.</li>
+  <li>The physics says: compress a gas (smaller volume) and its temperature must rise. State that as the property.</li>
+</ul>
+<pre>for many random (T1, V1) and compression factor 0 < f < 1:
+    V2 = f · V1                    // f < 1 means compression
+    T2 = adiabatic_temp(T1, V1, V2)
+    require T2 > T1                // compressing must heat the gas
+    else report: "adiabatic broke: T1,V1,V2=… got T2=… (should be > T1) — ratio inverted?"</pre>
+<p>A single example might never hit a compression case. Hundreds of random runs leave the inverted ratio nowhere to hide, and the failure message points straight at it.</p>
+<p class="repo-note">Runnable Python (Hypothesis), a no-library version, and Julia are in the repo: <code>examples/</code></p>
+</div>`
+  },
+
+  /* ============ GREEN: how to choose a property ============ */
+  {
+    id:"branch-choose", x:3200, y:3300, w:235, h:130, cls:"node-good",
+    icon:"🧭", eyebrow:"", label:"How to Choose\na Property",
+    sub:"a decision flow + patterns",
+    pEyebrow:"CHOOSING A PROPERTY", pTitle:"How to choose a property",
+    body:`
+<div class="panel-main">
+<p>Picking the property is the hard part — it is where your domain knowledge does the work. Start with one question: can you compute the exact answer cheaply and independently?</p>
+<div class="flow">
+  <div class="flow-box q"><span class="fl">Start</span>Can you compute the exact expected answer, cheaply and independently?</div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-branch">
+    <div class="flow-box yes"><span class="fl">Yes</span>Write an example / assert test: <code>assert f(x) == known</code>.</div>
+    <div class="flow-box no"><span class="fl">No — oracle problem</span>Can you relate two runs of the code?</div>
+  </div>
+  <div class="flow-arrow">↓ (the "no" path)</div>
+  <div class="flow-box yes"><span class="fl">Yes</span>Write a metamorphic relation, then pick a pattern below.</div>
+  <div class="pattern-grid">
+    <span>invariance</span><span>scaling / linearity</span><span>symmetry</span>
+    <span>idempotence f(f(x))=f(x)</span><span>inverse / round-trip</span>
+    <span>conservation</span><span>monotonicity</span><span>subset</span>
+  </div>
+</div>
+<p><strong>Monotonicity:</strong> more of an input never decreases the output — the property the gas-turbine example relies on. One good property per function is enough to start.</p>
+</div>`
+  },
+  {
+    id:"choose-scaling", x:2350, y:3700, w:230, h:128, cls:"node-good",
+    icon:"⇗", eyebrow:"", label:"Scaling &\nLinearity",
+    sub:"comes from the equations",
+    pEyebrow:"PATTERN · SCALING", pTitle:"Scaling and linearity relations",
+    body:`
+<div class="panel-main">
+<p>A known scaling is a metamorphic property you read straight off the governing equation.</p>
+<ul>
+  <li>Ideal gas: double the moles → pressure doubles.</li>
+  <li>Linear solver: scale the right-hand side by <em>k</em> → solution scales by <em>k</em>.</li>
+  <li>Signal power: scale amplitude by <em>k</em> → power scales by <em>k²</em>.</li>
+  <li>Brayton efficiency rises with pressure ratio (monotonicity: more of an input never decreases the output).</li>
+</ul>
+<p>If you can write the physics, you can write the test — just check the output moved by the predicted factor.</p>
+</div>`
+  },
+  {
+    id:"choose-symmetry", x:3200, y:4100, w:230, h:128, cls:"node-good",
+    icon:"⟺", eyebrow:"", label:"Symmetry &\nInvariance",
+    sub:"order shouldn't matter",
+    pEyebrow:"PATTERN · SYMMETRY", pTitle:"Symmetry and invariance relations",
+    body:`
+<div class="panel-main">
+<p>A correct implementation must keep the symmetries the physics respects. Break one and the code is almost certainly wrong.</p>
+<ul>
+  <li>Distance is symmetric: <code>dist(a, b) == dist(b, a)</code>.</li>
+  <li>Permute inputs to an estimator → result unchanged (invariance).</li>
+  <li>Relabel graph nodes → path lengths unchanged.</li>
+  <li>Ordering survives a unit change: warmer °C → warmer K.</li>
+</ul>
+<p>These catch indexing and bookkeeping bugs single examples slip past.</p>
+</div>`
+  },
+  {
+    id:"choose-roundtrip", x:4050, y:3700, w:230, h:128, cls:"node-good",
+    icon:"∘", eyebrow:"", label:"Round-Trip &\nIdempotence",
+    sub:"there and back; twice = once",
+    pEyebrow:"PATTERN · ROUND-TRIP", pTitle:"Inverse round-trips and idempotence",
+    body:`
+<div class="panel-main">
+<p>Two related patterns, both easy to state and good at catching bugs.</p>
+<ul>
+  <li><strong>Round-trip:</strong> an operation and its inverse land on the input.</li>
+  <li><code>decode(encode(x)) == x</code>; <code>°C → K → °C</code> recovers the value.</li>
+  <li><strong>Idempotence:</strong> once equals twice, <code>f(f(x)) == f(x)</code>.</li>
+  <li>Sorting a sorted list, normalizing a unit vector.</li>
+  <li><strong>Model-based:</strong> a fast impl and a slow reference must agree — the reference is your oracle.</li>
+</ul>
+</div>`
+  },
+
+  /* ============ ROSE: the closing result + assignment ============ */
+  {
+    id:"branch-agentic", x:1500, y:3900, w:235, h:135, cls:"node-rose",
+    icon:"🔬", eyebrow:"", label:"Agents Doing\nThis Now",
+    sub:"a real result + your task",
+    pEyebrow:"THE RESULT", pTitle:"Agents are already writing these tests",
+    body:`
+<div class="panel-main">
+<p>This is not hypothetical. An agent has already used property tests to find real bugs in widely-used libraries — the same style you are about to write.</p>
+<ul>
+  <li>The skill plus a shrinking library turns up bugs in code people have trusted for years.</li>
+  <li>The agent reads the small counterexample and can act on it, the same loop you saw earlier.</li>
+  <li>The last node is your assignment: do this on one of your own functions.</li>
+</ul>
+<p><strong>Real-world result</strong> (Anthropic + Hypothesis study):</p>
+<ul>
+  <li>A <strong>Claude Opus 4.1</strong> agent wrote Hypothesis property tests, on its own, against <strong>100 popular Python packages</strong>.</li>
+  <li>About <strong>56%</strong> of the bug reports it filed were valid bugs.</li>
+  <li>It found <code>numpy.random.wald</code> returning <strong>negative values</strong> — impossible for that distribution — from <strong>catastrophic cancellation</strong> in the floating-point math.</li>
+  <li>Reference: <a href="https://arxiv.org/abs/2510.09907" target="_blank" rel="noopener">arXiv:2510.09907</a>.</li>
+</ul>
+</div>
+<p class="panel-source">Source · <a href="https://arxiv.org/abs/2510.09907" target="_blank" rel="noopener">arXiv:2510.09907</a> · <a href="https://red.anthropic.com/2026/property-based-testing/" target="_blank" rel="noopener">red.anthropic.com/2026/property-based-testing</a></p>`
+  },
+  {
+    id:"assignment", x:2400, y:4300, w:240, h:135, cls:"node-rose",
+    icon:"📌", eyebrow:"", label:"Your\nAssignment",
+    sub:"add a property suite · demo next class",
+    pEyebrow:"YOUR ASSIGNMENT", pTitle:"Add a property test suite to your own code",
+    body:`
+<div class="panel-main">
+<p>Add a property-based test suite to one of your own research codes, note it, and demo it next class.</p>
+<ul>
+  <li>Pick one function.</li>
+  <li>Ask: what must always be true? Units, signs, conservation, scaling, symmetry, round-trip.</li>
+  <li>Write 1–3 properties with Hypothesis (Python) or the <code>Test</code> stdlib / Supposition.jl (Julia).</li>
+  <li>No predictable output? Find a metamorphic relation between two runs.</li>
+  <li>Commit the test file with a one-line note per property.</li>
+  <li>Come ready to show one property that failed first, and what it caught.</li>
+  <li>Keep these in the repo so your agents copy the good style.</li>
+</ul>
+<p>The hard, valuable part is naming the invariant in your own domain.</p>
+</div>
+<p class="panel-source">Help · <a href="https://hypothesis.readthedocs.io" target="_blank" rel="noopener">Hypothesis docs</a> · <a href="https://docs.julialang.org/en/v1/stdlib/Test/" target="_blank" rel="noopener">Julia Test stdlib</a> · <a href="https://github.com/Seelengrab/Supposition.jl" target="_blank" rel="noopener">Supposition.jl</a></p>`
+  },
+];
+
+/* ---------- Linear walkthrough order ----------
+   Starts with the agentic-loop motivation, then the two tools, then the
+   examples, then choosing a property, then the closing result + assignment. */
+const SEQUENCE = [
+  "root",
+  "branch-loop","loop-flow","loop-imitate",
+  "branch-why","why-pbt","why-mt","why-vs",
+  "branch-code","code-gas-hyp","code-gas-plain","code-turbine","code-temp","code-buggy",
+  "branch-choose","choose-scaling","choose-symmetry","choose-roundtrip",
+  "branch-agentic","assignment",
+];
+
+/* ---------- Edges (tree structure; root connects to each branch) ---------- */
+const EDGES = [
+  ["root","branch-loop"],["root","branch-why"],["root","branch-code"],
+  ["root","branch-choose"],["root","branch-agentic"],
+  ["branch-loop","loop-flow"],["branch-loop","loop-imitate"],
+  ["branch-why","why-pbt"],["branch-why","why-mt"],["branch-why","why-vs"],
+  ["branch-code","code-gas-hyp"],["branch-code","code-gas-plain"],
+  ["branch-code","code-turbine"],["branch-code","code-temp"],["branch-code","code-buggy"],
+  ["branch-choose","choose-scaling"],["branch-choose","choose-symmetry"],["branch-choose","choose-roundtrip"],
+  ["branch-agentic","assignment"],
+];
+
+/* ============================================================================
+   ENGINE
+   ========================================================================== */
+const byId = {};
+NODES.forEach(n => byId[n.id] = n);
+
+let current = 0;
+let started = false;
+let panelOpen = false;            // detail sidebar opens on CLICK only
+const reduced = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+// live camera transform (kept in sync with the DOM so free pan/zoom and the
+// guided tour share one source of truth)
+let camScale = 1, camTx = 0, camTy = 0;
+
+const camera = document.getElementById("camera");
+const stage  = document.getElementById("stage");
+const panel  = document.getElementById("panel");
+
+function branchColor(id){
+  const n = byId[id]; if(!n) return "#586173";
+  if(n.cls.includes("teal"))   return "#5fd2c2";
+  if(n.cls.includes("amber"))  return "#e8b04b";
+  if(n.cls.includes("indigo")) return "#8ea0e8";
+  if(n.cls.includes("good"))   return "#62d98a";
+  if(n.cls.includes("rose"))   return "#d98aa8";
+  return "#8ea0e8";
+}
+
+/* ---- build node cards ---- */
+function buildNodes(){
+  NODES.forEach(n=>{
+    const el = document.createElement("div");
+    el.className = "node " + n.cls;
+    el.id = "node-" + n.id;
+    el.style.left  = (n.x - n.w/2) + "px";
+    el.style.top   = (n.y - n.h/2) + "px";
+    el.style.width = n.w + "px";
+    el.style.minHeight = n.h + "px";
+    el.innerHTML =
+      (n.eyebrow ? `<div class="node-eyebrow">${n.eyebrow}</div>` : "") +
+      `<div class="node-icon">${n.icon}</div>` +
+      `<div class="node-label">${n.label.replace(/\n/g,"<br>")}</div>` +
+      (n.sub ? `<div class="node-sub">${n.sub}</div>` : "");
+    el.dataset.nodeId = n.id;
+    // click opens the panel — but only a real click, not the tail of a drag-pan
+    el.addEventListener("click", ()=>{ if(justDragged) return; ensureStarted(); jumpTo(n.id); });
+    camera.appendChild(el);
+  });
+}
+
+/* ---- build SVG bezier edges ---- */
+function buildEdges(){
+  const svg = document.getElementById("edges");
+  EDGES.forEach(([a,b])=>{
+    const A = byId[a], B = byId[b];
+    if(!A||!B) return;
+    const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.id = "edge-"+a+"-"+b;
+    p.classList.add("edge");
+    const cx=(A.x+B.x)/2, cy=(A.y+B.y)/2 - Math.abs(B.x-A.x)*0.08;
+    p.setAttribute("d", `M ${A.x} ${A.y} Q ${cx} ${cy} ${B.x} ${B.y}`);
+    p.setAttribute("stroke", branchColor(b));
+    svg.appendChild(p);
+  });
+}
+
+/* ---- progress dots ---- */
+function buildDots(){
+  const wrap = document.getElementById("progdots");
+  SEQUENCE.forEach((id,i)=>{
+    const d = document.createElement("div");
+    d.className = "pdot"; d.id = "pdot-"+i;
+    d.title = (byId[id].label||id).replace(/\n/g," ");
+    d.addEventListener("click", ()=>{ ensureStarted(); goTo(i); });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---- content bounding box (for zoom-to-fit) ---- */
+function contentBBox(){
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  NODES.forEach(n=>{
+    x0=Math.min(x0,n.x-n.w/2); y0=Math.min(y0,n.y-n.h/2);
+    x1=Math.max(x1,n.x+n.w/2); y1=Math.max(y1,n.y+n.h/2);
+  });
+  // pad for labels / glow
+  const pad=120;
+  return {x:x0-pad,y:y0-pad,w:(x1-x0)+pad*2,h:(y1-y0)+pad*2};
+}
+
+/* ---- available viewport region (account for docked panel) ---- */
+function viewRegion(open){
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const narrow = vw<=900;
+  if(narrow){
+    // panel docks to bottom; node lives in top region
+    const bottom = open ? Math.round(vh*0.54)+28 : 28;
+    return {x:16, y:120, w:vw-32, h:Math.max(160, vh-120-bottom)};
+  }
+  // panel docks right; node lives in left region
+  const panelW = open ? Math.min(580, Math.max(380, vw*0.40)) + 36 : 0;
+  return {x:24, y:24, w:Math.max(220, vw-panelW-48), h:vh-48};
+}
+
+/* ---- set camera transform (and remember it for free pan/zoom + minimap) ---- */
+function setCamera(scale, tx, ty){
+  camScale = scale; camTx = tx; camTy = ty;
+  camera.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+
+/* ---- fit whole map into the available region ---- */
+function fitOverview(open){
+  const bb = contentBBox();
+  const r  = viewRegion(open);
+  const scale = Math.min(r.w/bb.w, r.h/bb.h);
+  const tx = r.x + (r.w - bb.w*scale)/2 - bb.x*scale;
+  const ty = r.y + (r.h - bb.h*scale)/2 - bb.y*scale;
+  setCamera(scale, tx, ty);
+}
+
+/* ---- focus one node: fill a large, readable share of the available region ----
+   The node card should occupy ~45-60% of the available width. We pick the
+   scale that makes the card span FILL_FRAC of the region (width or height,
+   whichever binds), clamped to a sane max so tiny cards don't blow up. */
+function focusNode(node){
+  const r = viewRegion(panelOpen);
+  const FILL_FRAC = 0.52;       // card fills ~52% of the available region
+  const sW = (r.w * FILL_FRAC) / node.w;
+  const sH = (r.h * FILL_FRAC) / node.h;
+  let scale = Math.min(sW, sH);
+  scale = Math.max(0.6, Math.min(scale, 2.4));   // readable band, much closer than before
+  const cx = r.x + r.w/2;        // center of the available region
+  const cy = r.y + r.h/2;
+  setCamera(scale, cx - node.x*scale, cy - node.y*scale);
+}
+
+/* ---- confine the bottom chrome to the visible LEFT band when panel is open ---- */
+function confineChrome(){
+  // wide screens: panel docks right, so reserve the panel width on the right.
+  const vw = window.innerWidth;
+  const narrow = vw <= 900;
+  let right = 0;
+  if(panelOpen && !narrow){
+    const panelW = Math.min(580, Math.max(380, vw*0.40));
+    right = panelW + 36;   // 18px panel inset + 18px gap to the chrome
+  }
+  document.documentElement.style.setProperty("--chrome-right", right + "px");
+}
+
+/* ---- main navigation: move the camera, NEVER open the panel ----
+   Arrow nav focuses (zooms to) the node. If the panel is already open it
+   tracks the node in the left band; if closed, the node centers in the full
+   viewport. Clicking a node is what opens the panel (see jumpTo). */
+function navigate(){
+  const id = SEQUENCE[current];
+  const node = byId[id];
+  if(!node) return;
+
+  document.querySelectorAll(".node").forEach(el=>el.classList.remove("active"));
+  const el = document.getElementById("node-"+id);
+  if(el) el.classList.add("active");
+
+  focusNode(node);
+  if(panelOpen) fillPanel(node);   // keep an open panel in sync with the tour
+
+  SEQUENCE.forEach((_,i)=>{
+    const d = document.getElementById("pdot-"+i);
+    if(!d) return;
+    d.classList.remove("active","visited");
+    if(i===current) d.classList.add("active");
+    else if(i<current) d.classList.add("visited");
+  });
+
+  document.querySelectorAll(".edge").forEach(e=>e.classList.remove("active"));
+  EDGES.forEach(([a,b])=>{
+    if(a===id||b===id){
+      const ep=document.getElementById("edge-"+a+"-"+b);
+      if(ep) ep.classList.add("active");
+    }
+  });
+
+  document.getElementById("progress").style.width =
+    (current/(SEQUENCE.length-1)*100)+"%";
+
+  // redraw minimap after camera settles
+  drawMinimap();
+  setTimeout(drawMinimap, reduced?60:300);
+  setTimeout(drawMinimap, reduced?120:880);
+}
+
+/* arrow keys / dots: move + zoom, no panel */
+function goTo(i){
+  if(i<0 || i>=SEQUENCE.length) return;
+  current = i;
+  navigate();
+}
+
+/* clicking a node (or Enter): move there AND open the detail panel */
+function jumpTo(id){
+  const i = SEQUENCE.indexOf(id);
+  if(i<0) return;
+  current = i;
+  openPanel(byId[id]);   // sets panelOpen=true, re-confines chrome, then focuses
+  navigate();
+}
+
+function fillPanel(node){
+  const eb = document.getElementById("panel-eyebrow");
+  const ti = document.getElementById("panel-title");
+  const bd = document.getElementById("panel-body");
+  eb.textContent = node.pEyebrow || node.eyebrow || "";
+  ti.textContent = node.pTitle || "";
+  bd.innerHTML   = node.body || "";
+  bd.scrollTop = 0;
+  const c = branchColor(node.id);
+  eb.style.color = c;
+  ti.style.color = node.id==="root" ? "var(--ink)" : c;
+}
+
+function openPanel(node){
+  fillPanel(node);
+  panelOpen = true;
+  panel.classList.add("visible");
+  confineChrome();
+}
+
+function closePanel(){
+  if(!panelOpen) return;
+  panelOpen = false;
+  panel.classList.remove("visible");
+  confineChrome();
+  // re-center the current node in the now-full viewport
+  const node = byId[SEQUENCE[current]];
+  if(node) focusNode(node);
+  drawMinimap();
+  setTimeout(drawMinimap, reduced?60:300);
+  setTimeout(drawMinimap, reduced?120:880);
+}
+
+/* ============================================================================
+   MINIMAP (real: draws nodes + viewport rectangle, in bottom-left container)
+   ========================================================================== */
+/* mapping from world coords → minimap canvas pixels (kept for click/drag) */
+let mmMap = null;
+function computeMMMap(){
+  const cvs = document.getElementById("mm-canvas");
+  if(!cvs) return null;
+  const W = cvs.width, H = cvs.height;
+  const bb = contentBBox();
+  const s  = Math.min(W/bb.w, H/bb.h) * 0.94;
+  const ox = (W - bb.w*s)/2 - bb.x*s;
+  const oy = (H - bb.h*s)/2 - bb.y*s;
+  mmMap = {s, ox, oy, W, H};
+  return mmMap;
+}
+
+function drawMinimap(){
+  const cvs = document.getElementById("mm-canvas");
+  if(!cvs) return;
+  const ctx = cvs.getContext("2d");
+  const m = computeMMMap();
+  const W = m.W, H = m.H, s = m.s, ox = m.ox, oy = m.oy;
+  const MX = x => x*s + ox;
+  const MY = y => y*s + oy;
+
+  ctx.clearRect(0,0,W,H);
+
+  // edges
+  EDGES.forEach(([a,b])=>{
+    const A=byId[a], B=byId[b]; if(!A||!B) return;
+    ctx.strokeStyle = branchColor(b)+"44";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(MX(A.x),MY(A.y));
+    ctx.lineTo(MX(B.x),MY(B.y));
+    ctx.stroke();
+  });
+
+  // nodes
+  const curId = SEQUENCE[current];
+  NODES.forEach(n=>{
+    const r = n.id==="root" ? 5 : 3.4;
+    ctx.beginPath();
+    ctx.arc(MX(n.x),MY(n.y), r, 0, Math.PI*2);
+    const col = branchColor(n.id);
+    ctx.fillStyle = n.id===curId ? col : col+"77";
+    ctx.fill();
+    if(n.id===curId){
+      ctx.strokeStyle = "#eef1f7";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+  });
+
+  // viewport rectangle (invert the tracked camera transform)
+  const scale = camScale || 1;
+  const tx = camTx, ty = camTy;
+  if(scale>0){
+    const vx0 = (0 - tx)/scale;
+    const vy0 = (0 - ty)/scale;
+    const vx1 = (window.innerWidth  - tx)/scale;
+    const vy1 = (window.innerHeight - ty)/scale;
+    ctx.strokeStyle = "rgba(255,255,255,.55)";
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(MX(vx0), MY(vy0), (vx1-vx0)*s, (vy1-vy0)*s);
+  }
+}
+
+/* ============================================================================
+   FULLSCREEN
+   ========================================================================== */
+function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    if(document.documentElement.requestFullscreen)
+      document.documentElement.requestFullscreen().catch(()=>{});
+  } else {
+    if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+  }
+}
+
+/* ============================================================================
+   FREE EXPLORATION — drag-to-pan + wheel/trackpad zoom on the main canvas,
+   with click-vs-drag disambiguation so a pan never opens a node panel.
+   ========================================================================== */
+let justDragged = false;        // set briefly after a real drag; node-click reads it
+const DRAG_THRESHOLD = 6;       // px of movement before a press counts as a drag
+
+(function setupPan(){
+  let down = false, dragging = false, sx = 0, sy = 0, startTx = 0, startTy = 0;
+
+  function onDown(e){
+    if(e.button !== undefined && e.button !== 0) return;   // left button / touch only
+    // ignore presses that start on the chrome / panel / minimap (their own handlers)
+    if(e.target.closest("#chrome,#panel,#minimap")) return;
+    down = true; dragging = false;
+    sx = e.clientX; sy = e.clientY;
+    startTx = camTx; startTy = camTy;
+  }
+  function onMove(e){
+    if(!down) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if(!dragging && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+    if(!dragging){
+      dragging = true;
+      ensureStarted();
+      stage.classList.add("grabbing");
+      camera.style.transition = "none";      // pan should feel direct
+    }
+    setCamera(camScale, startTx + dx, startTy + dy);
+    drawMinimap();
+  }
+  function onUp(){
+    if(!down) return;
+    down = false;
+    if(dragging){
+      stage.classList.remove("grabbing");
+      restoreCamTransition();
+      justDragged = true;                    // suppress the click that follows
+      setTimeout(()=>{ justDragged = false; }, 0);
+      drawMinimap();
+    }
+  }
+
+  stage.addEventListener("pointerdown", onDown);
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp);
+})();
+
+function restoreCamTransition(){
+  camera.style.transition = reduced ? "transform .25s ease"
+                                    : "transform .85s cubic-bezier(.7,0,.18,1)";
+}
+
+/* wheel / trackpad zoom, anchored at the cursor */
+stage.addEventListener("wheel", e=>{
+  if(e.target.closest("#panel,#minimap")) return;
+  e.preventDefault();
+  ensureStarted();
+  const rect = stage.getBoundingClientRect();
+  const px = e.clientX - rect.left, py = e.clientY - rect.top;
+  // world point under the cursor
+  const wx = (px - camTx) / camScale;
+  const wy = (py - camTy) / camScale;
+  const factor = Math.exp(-e.deltaY * 0.0015);
+  let scale = camScale * factor;
+  scale = Math.max(0.18, Math.min(scale, 3.2));
+  // keep the same world point under the cursor after scaling
+  camera.style.transition = "none";
+  setCamera(scale, px - wx*scale, py - wy*scale);
+  drawMinimap();
+  clearTimeout(stage._wheelTO);
+  stage._wheelTO = setTimeout(restoreCamTransition, 120);
+}, {passive:false});
+
+/* ============================================================================
+   MINIMAP INTERACTION — click to recenter; drag the viewport rect to pan.
+   ========================================================================== */
+(function setupMinimap(){
+  const cvs = document.getElementById("mm-canvas");
+  if(!cvs) return;
+  let dragging = false;
+
+  // canvas pixel (CSS) → world coords, inverting computeMMMap()
+  function toWorld(e){
+    const rect = cvs.getBoundingClientRect();
+    const m = mmMap || computeMMMap();
+    // canvas backing store is larger than its CSS box; scale the click in
+    const cx = (e.clientX - rect.left) * (m.W / rect.width);
+    const cy = (e.clientY - rect.top)  * (m.H / rect.height);
+    return { x:(cx - m.ox)/m.s, y:(cy - m.oy)/m.s };
+  }
+  // recenter the main camera on world point (wx,wy), keeping current scale
+  function centerOn(wx, wy){
+    ensureStarted();
+    const cx = window.innerWidth/2, cy = window.innerHeight/2;
+    camera.style.transition = "none";
+    setCamera(camScale, cx - wx*camScale, cy - wy*camScale);
+    drawMinimap();
+  }
+
+  cvs.addEventListener("pointerdown", e=>{
+    e.preventDefault();
+    dragging = true;
+    cvs.setPointerCapture(e.pointerId);
+    const w = toWorld(e); centerOn(w.x, w.y);
+  });
+  cvs.addEventListener("pointermove", e=>{
+    if(!dragging) return;
+    const w = toWorld(e); centerOn(w.x, w.y);
+  });
+  cvs.addEventListener("pointerup", e=>{
+    if(!dragging) return;
+    dragging = false;
+    try{ cvs.releasePointerCapture(e.pointerId); }catch(_){}
+    restoreCamTransition();
+    drawMinimap();
+  });
+})();
+
+/* ============================================================================
+   CONTROLS
+   ========================================================================== */
+document.getElementById("btn-next").addEventListener("click", ()=>{ ensureStarted(); goTo(current+1); });
+document.getElementById("btn-prev").addEventListener("click", ()=>{ ensureStarted(); goTo(current-1); });
+document.getElementById("panel-close").addEventListener("click", closePanel);
+
+document.addEventListener("keydown", e=>{
+  // fullscreen works even before the first interaction
+  if(e.key==="f"||e.key==="F"){ e.preventDefault(); toggleFullscreen(); return; }
+  const k = e.key;
+  if(k==="Escape"){ if(panelOpen){ e.preventDefault(); closePanel(); } return; }
+
+  // first arrow press clears the title and starts the tour
+  const isNav = ["ArrowRight","ArrowDown"," ","PageDown","ArrowLeft","ArrowUp","PageUp","Home","End","Enter"].includes(k);
+  if(isNav) ensureStarted();
+  if(!started) return;
+
+  if(k==="ArrowRight"||k==="ArrowDown"||k===" "||k==="PageDown"){
+    e.preventDefault(); goTo(current+1);
+  } else if(k==="ArrowLeft"||k==="ArrowUp"||k==="PageUp"){
+    e.preventDefault(); goTo(current-1);
+  } else if(k==="Home"){
+    e.preventDefault(); goTo(0);
+  } else if(k==="End"){
+    e.preventDefault(); goTo(SEQUENCE.length-1);
+  } else if(k==="Enter"){
+    // Enter opens the detail panel for the focused node
+    e.preventDefault(); openPanel(byId[SEQUENCE[current]]); navigate();
+  }
+});
+
+document.addEventListener("fullscreenchange", ()=>{
+  // re-fit on the way in/out of fullscreen
+  setTimeout(()=>{
+    confineChrome();
+    if(started){ const n=byId[SEQUENCE[current]]; if(n) focusNode(n); }
+    else fitOverview(false);
+    drawMinimap();
+  }, 120);
+});
+
+window.addEventListener("resize", ()=>{
+  confineChrome();
+  if(started){ const n=byId[SEQUENCE[current]]; if(n) focusNode(n); }
+  else fitOverview(false);
+  drawMinimap();
+});
+
+/* First interaction clears the title strip and begins the tour at the root.
+   The full map is already visible behind the title, so there is no hidden
+   "Begin" screen — pressing → or clicking a node just starts zooming in. */
+function ensureStarted(){
+  if(started) return;
+  const t = document.getElementById("title");
+  t.classList.add("hidden");
+  setTimeout(()=>{ t.style.display="none"; }, 700);
+  started = true;
+}
+
+/* ============================================================================
+   DEV CHECK — verify no two node boxes overlap (logged to console)
+   ========================================================================== */
+function checkOverlaps(){
+  const boxes = NODES.map(n=>({id:n.id, x0:n.x-n.w/2, y0:n.y-n.h/2, x1:n.x+n.w/2, y1:n.y+n.h/2}));
+  const GAP = 40; // required clear gap between any two cards
+  let problems=0;
+  for(let i=0;i<boxes.length;i++){
+    for(let j=i+1;j<boxes.length;j++){
+      const a=boxes[i], b=boxes[j];
+      const ox = Math.min(a.x1,b.x1) - Math.max(a.x0,b.x0);
+      const oy = Math.min(a.y1,b.y1) - Math.max(a.y0,b.y0);
+      // gap = negative overlap; require at least GAP separation on one axis
+      const sepX = Math.max(a.x0,b.x0) - Math.min(a.x1,b.x1); // >0 if separated horizontally
+      const sepY = Math.max(a.y0,b.y0) - Math.min(a.y1,b.y1);
+      const clear = Math.max(sepX, sepY);
+      if(ox>0 && oy>0){
+        console.warn(`OVERLAP: ${a.id} ↔ ${b.id}`);
+        problems++;
+      } else if(clear < GAP){
+        console.info(`tight (${clear.toFixed(0)}px): ${a.id} ↔ ${b.id}`);
+      }
+    }
+  }
+  if(problems===0) console.log("✓ node layout: no overlapping cards");
+  return problems;
+}
+
+/* ============================================================================
+   INIT
+   ========================================================================== */
+buildNodes();
+buildEdges();
+buildDots();
+checkOverlaps();
+
+// On load: panel CLOSED, chrome full width, camera fit to the WHOLE map.
+panelOpen = false;
+confineChrome();
+camera.style.transition = "none";
+fitOverview(false);
+requestAnimationFrame(()=>{
+  drawMinimap();
+  setTimeout(restoreCamTransition, 50);
+});
+</script>
+</body>
+</html>
