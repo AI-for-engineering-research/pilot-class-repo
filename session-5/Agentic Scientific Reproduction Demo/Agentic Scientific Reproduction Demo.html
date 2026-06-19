@@ -80,6 +80,13 @@ code,pre{font-family:var(--mono)}
 .eyebrow{font-family:var(--mono);color:var(--amber);letter-spacing:.18em;text-transform:uppercase;font-size:.78rem}
 .hero h1{font-family:var(--display);font-size:clamp(2.4rem,6vw,5.7rem);line-height:.95;letter-spacing:-.045em;margin:.25em 0 .18em;max-width:1050px}
 .lead{font-size:clamp(1.05rem,2vw,1.35rem);color:var(--muted);max-width:980px;margin-bottom:0}
+.sourcepaper{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:16px;max-width:980px;
+  font-size:.95rem;line-height:1.5;color:var(--muted)}
+.sourcepaper .lbl{flex:0 0 auto;font-family:var(--mono);color:var(--amber);letter-spacing:.12em;
+  text-transform:uppercase;font-size:.7rem;border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+.sourcepaper cite{font-style:italic;color:#dbe7f6}
+.sourcepaper a{color:var(--teal);text-decoration:none;border-bottom:1px solid rgba(95,210,194,.4);white-space:nowrap}
+.sourcepaper a:hover{border-bottom-color:var(--teal)}
 .pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .pill{border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:#dbe7f6;background:rgba(255,255,255,.045);font-family:var(--mono);font-size:.82rem}
 .demoSkip{display:none}
@@ -241,6 +248,7 @@ summary{cursor:pointer;font-weight:650;color:#fff}
       <div class="eyebrow">Session 05 · Agentic scientific reproduction</div>
       <h1>A paper figure, rebuilt from conversation.</h1>
       <p class="lead">This lesson reconstructs a missed live recording as a log-playback screencast: user prompts pause, agent/tool output scrolls quickly, and the video slows down at failures, equations, digitization, and validation checkpoints.</p>
+      <p class="sourcepaper"><span class="lbl">Source paper</span><span>Petters, M. D. &amp; Kreidenweis, S. M. (2007). A single parameter representation of hygroscopic growth and cloud condensation nucleus activity. <cite>Atmos. Chem. Phys.</cite> <b>7</b>, 1961–1971. <a href="https://doi.org/10.5194/acp-7-1961-2007" target="_blank" rel="noopener">doi.org/10.5194/acp-7-1961-2007&nbsp;↗</a></span></p>
       <div class="pillrow"><span class="pill">UV + git</span><span class="pill">red-green-refactor</span><span class="pill">Hypothesis</span><span class="pill">PDF extraction</span><span class="pill">image thresholding</span><span class="pill">interactive transcript</span></div>
       <a class="demoSkip" href="#demo">Jump to interactive demo ↓</a>
     </div>
@@ -294,7 +302,7 @@ summary{cursor:pointer;font-weight:650;color:#fff}
       <section id="moments">
         <h2>Key moments in the session</h2>
         <h3>1. Equations became executable tests</h3>
-        <p>The paper’s κ-Köhler expression was translated into a public API. Tests checked the Kelvin coefficient, the κ=0 limiting case, and the large-droplet approximation for critical supersaturation.</p>
+        <p><a href="https://doi.org/10.5194/acp-7-1961-2007" target="_blank" rel="noopener">The paper</a>’s κ-Köhler expression was translated into a public API. Tests checked the Kelvin coefficient, the κ=0 limiting case, and the large-droplet approximation for critical supersaturation.</p>
         <pre class="code">S(D) = [(D³ - Dd³) / (D³ - Dd³(1 - κ))] exp(A/D)
 A = 4 σ M_w / (R T ρ_w)
 sc = max_D S(D) - 1</pre>
