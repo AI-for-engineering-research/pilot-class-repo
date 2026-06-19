@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agentic Scientific Reproduction Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Hanken+Grotesk:wght@400;500;650&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b14;
+  --panel:#101827;
+  --panel2:#0c1320;
+  --ink:#eef3fb;
+  --muted:#a8b4c8;
+  --line:rgba(255,255,255,.12);
+  --teal:#5fd2c2;
+  --amber:#e8b04b;
+  --rose:#d98aa8;
+  --blue:#8ea0e8;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --body:"Hanken Grotesk",system-ui,sans-serif;
+  --display:"Bricolage Grotesque",var(--body);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  overflow-x:hidden;
+  background:
+    radial-gradient(900px 500px at 20% 0%,rgba(142,160,232,.25),transparent 60%),
+    radial-gradient(800px 700px at 95% 25%,rgba(95,210,194,.15),transparent 62%),
+    linear-gradient(180deg,rgba(255,255,255,.018),transparent 32rem),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--body);
+  line-height:1.55;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.7),transparent 56rem);
+}
+a{color:var(--teal)}
+code,pre{font-family:var(--mono)}
+.courseNav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px clamp(20px,5vw,72px) 0;
+  color:var(--muted);
+  font-family:var(--mono);
+  font-size:.82rem;
+  position:relative;
+  z-index:10;
+}
+.courseNav a{
+  color:var(--ink);
+  text-decoration:none;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:7px 12px;
+  background:rgba(255,255,255,.045);
+}
+.courseNav a:hover{border-color:rgba(95,210,194,.65);color:var(--teal)}
+.hero{padding:38px clamp(20px,5vw,72px) 24px}
+.heroGrid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(280px,360px);
+  gap:24px;
+  align-items:end;
+}
+.heroGrid > *, .lab > *, .grid > *{min-width:0}
+.eyebrow{font-family:var(--mono);color:var(--amber);letter-spacing:.18em;text-transform:uppercase;font-size:.78rem}
+.hero h1{font-family:var(--display);font-size:clamp(2.4rem,6vw,5.7rem);line-height:.95;letter-spacing:-.045em;margin:.25em 0 .18em;max-width:1050px}
+.lead{font-size:clamp(1.05rem,2vw,1.35rem);color:var(--muted);max-width:980px;margin-bottom:0}
+.pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.pill{border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:#dbe7f6;background:rgba(255,255,255,.045);font-family:var(--mono);font-size:.82rem}
+.demoSkip{display:none}
+.outcomeMotif{
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.035));
+  box-shadow:0 18px 60px rgba(0,0,0,.28);
+}
+.motifTitle{font-family:var(--mono);font-size:.74rem;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.motifStrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}
+.motifThumb{
+  min-width:0;
+  text-decoration:none;
+  color:var(--ink);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+  overflow:hidden;
+  background:rgba(255,255,255,.04);
+}
+.motifThumb img{display:block;width:100%;height:78px;object-fit:cover;background:#fff}
+.motifThumb span{display:block;padding:7px 8px;font-family:var(--mono);font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lab{
+  position:relative;
+  z-index:5;
+  display:grid;
+  grid-template-columns:minmax(520px,1.25fr) minmax(420px,.75fr);
+  gap:20px;
+  padding:18px clamp(16px,3.2vw,42px);
+  background:rgba(7,11,20,.9);
+  backdrop-filter:blur(16px);
+  border-block:1px solid var(--line);
+}
+.videoCard,.artifactCard{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.035));border:1px solid var(--line);border-radius:24px;box-shadow:0 22px 70px rgba(0,0,0,.34);overflow:hidden}
+.videoFrame{position:relative;background:#000}
+.videoCard video{width:100%;display:block;background:#000}
+.startHint{
+  position:absolute;
+  left:14px;
+  top:14px;
+  pointer-events:none;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 11px;
+  border-radius:999px;
+  background:rgba(7,11,20,.76);
+  border:1px solid rgba(95,210,194,.38);
+  color:#eafffb;
+  font-family:var(--mono);
+  font-size:.78rem;
+  box-shadow:0 10px 30px rgba(0,0,0,.32);
+  transition:opacity .18s ease,transform .18s ease;
+}
+.videoFrame.isPlaying .startHint{
+  opacity:0;
+  transform:translateY(-4px);
+}
+.videoMeta{padding:12px 16px;color:var(--muted);font-size:.95rem;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.videoMeta span:last-child{white-space:nowrap;color:var(--amber);font-family:var(--mono)}
+.artifactCard{padding:18px;display:grid;grid-template-rows:auto auto minmax(0,1fr);min-height:590px}
+.artifactHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.artifactHead h2{font-family:var(--display);font-size:1.45rem;line-height:1.05;margin:0}
+.timebadge{font-family:var(--mono);font-size:.82rem;color:var(--amber);border:1px solid rgba(232,176,75,.35);border-radius:999px;padding:5px 9px;white-space:nowrap}
+.jumpIntro{margin:0 0 8px;color:var(--muted);font-size:.9rem}
+.jumpGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;max-height:154px;overflow-y:auto;overflow-x:hidden;margin:0 0 12px;padding:2px;scroll-snap-type:none}
+.jump{cursor:pointer;text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);border-radius:14px;padding:10px 12px;transition:.18s;min-height:56px;font:inherit}
+.jump:hover,.jump.active,.jump[aria-current="true"]{border-color:rgba(95,210,194,.65);background:rgba(95,210,194,.12)}
+.jump b{display:block;font-size:.92rem;line-height:1.12}
+.jump span{font-family:var(--mono);font-size:.75rem;color:var(--muted);display:block;margin-top:5px}
+.artifactBody{display:grid;gap:12px;align-content:start;min-height:0;overflow:auto;padding-right:2px}
+.artifactBody img{width:100%;max-height:330px;object-fit:contain;background:white;border-radius:14px;padding:8px}
+.artifactBody pre{white-space:pre-wrap;background:#050912;border:1px solid rgba(95,210,194,.22);border-radius:14px;padding:16px;color:#dceef0;max-height:340px;overflow:auto;font-size:.9rem;line-height:1.45;margin:0}
+.artifactBody p{margin:.2rem 0;color:var(--muted);font-size:1rem}
+main{padding:34px clamp(20px,5vw,72px) 80px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);gap:28px;align-items:start}
+.article{max-width:920px}
+.article section{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:24px;padding:26px;margin-bottom:22px}
+.article h2{font-family:var(--display);font-size:2rem;line-height:1.05;margin:0 0 12px}
+.article h3{font-size:1.25rem;margin:1.3rem 0 .4rem;color:#fff}
+.article p{color:var(--muted)}
+.article li{margin:.45rem 0;color:var(--muted)}
+.callout{border-left:4px solid var(--teal);padding:12px 16px;background:rgba(95,210,194,.08);border-radius:12px;color:#dff7f4}
+.quote{border-left:3px solid var(--amber);padding:10px 16px;background:rgba(232,176,75,.08);border-radius:12px;color:#f2e4c8}
+.code{background:#050912;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:15px;overflow:auto;color:#dceef0}
+.side{position:sticky;top:24px}
+.side .box{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:16px}
+.side h3{margin-top:0}
+.miniLink{display:block;border-top:1px solid var(--line);padding:9px 0;color:var(--ink);text-decoration:none}
+.tablewrap{overflow:auto}
+.tablewrap table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.tablewrap th,.tablewrap td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:right}
+.tablewrap th:first-child,.tablewrap td:first-child{text-align:left}
+.tablewrap th{color:#fff;background:rgba(255,255,255,.04)}
+details{border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin:12px 0;background:rgba(255,255,255,.025)}
+summary{cursor:pointer;font-weight:650;color:#fff}
+.turn{margin:14px 0;padding:12px;border-radius:12px;background:rgba(255,255,255,.035)}
+.turn b{color:var(--teal)}
+@media (min-width:1051px){
+  .lab{align-items:start}
+  .videoCard{min-height:0}
+  .videoCard video{max-height:72svh;object-fit:contain}
+  .artifactCard{min-height:0;max-height:none}
+  .artifactBody{overflow:visible}
+  .artifactBody img{max-height:min(330px,38svh)}
+  .artifactBody pre{max-height:min(340px,38svh)}
+}
+@media (max-width:1050px){
+  .heroGrid,.lab,.grid{grid-template-columns:1fr}
+  .lab{position:relative}
+  .artifactCard{min-height:auto}
+  .side{position:static}
+}
+@media (max-width:600px){
+  .courseNav{padding:10px 16px 0;font-size:.72rem;align-items:flex-start}
+  .courseNav a{padding:6px 10px}
+  .courseNav span{text-align:right;line-height:1.35}
+  .hero{padding:30px 16px 16px}
+  .eyebrow{font-size:.68rem;letter-spacing:.12em}
+  .hero h1{font-size:clamp(2rem,10vw,2.55rem);line-height:.98;letter-spacing:-.035em;max-width:9ch}
+  .lead{font-size:1.03rem;line-height:1.45}
+  .pillrow{gap:8px;margin-top:14px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+  .pill{font-size:.76rem;padding:6px 10px;white-space:nowrap}
+  .demoSkip{display:inline-block;margin-top:10px;color:var(--teal);font-family:var(--mono);font-size:.82rem;text-decoration:none}
+  .outcomeMotif{padding:10px;border-radius:18px;overflow:hidden}
+  .motifTitle{font-size:.68rem;margin-bottom:8px}
+  .motifStrip{gap:6px}
+  .motifThumb img{height:56px}
+  .motifThumb span{padding:6px;font-size:.62rem}
+  .lab{padding:14px 16px;gap:14px}
+  .videoCard,.artifactCard{border-radius:18px}
+  .startHint{top:10px;left:10px;font-size:.7rem;padding:6px 9px}
+  .videoMeta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:10px 14px;font-size:.9rem}
+  .artifactCard{padding:14px}
+  .artifactHead{align-items:flex-start;margin-bottom:8px}
+  .artifactHead h2{font-size:1.25rem}
+  .jumpIntro{font-size:.82rem;margin-bottom:7px}
+  .jumpGrid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;overflow:visible;gap:8px;margin-bottom:12px;padding:0}
+  .jump{min-height:54px;padding:9px 10px;border-radius:12px}
+  .jump b{font-size:.88rem}
+  .jump span{font-size:.72rem}
+  .artifactBody pre{max-height:220px;font-size:.78rem;padding:12px}
+  .artifactBody img{max-height:240px}
+  main{padding:26px 16px 64px}
+  .article section{border-radius:18px;padding:18px}
+}
+</style>
+</head>
+<body>
+<nav class="courseNav" aria-label="Course navigation">
+  <a href="../../index.html">← Course home</a>
+  <span>Session 05 / Agentic scientific reproduction</span>
+</nav>
+
+<header class="hero">
+  <div class="heroGrid">
+    <div>
+      <div class="eyebrow">Session 05 · Agentic scientific reproduction</div>
+      <h1>A paper figure, rebuilt from conversation.</h1>
+      <p class="lead">This lesson reconstructs a missed live recording as a log-playback screencast: user prompts pause, agent/tool output scrolls quickly, and the video slows down at failures, equations, digitization, and validation checkpoints.</p>
+      <div class="pillrow"><span class="pill">UV + git</span><span class="pill">red-green-refactor</span><span class="pill">Hypothesis</span><span class="pill">PDF extraction</span><span class="pill">image thresholding</span><span class="pill">interactive transcript</span></div>
+      <a class="demoSkip" href="#demo">Jump to interactive demo ↓</a>
+    </div>
+    <aside class="outcomeMotif" aria-label="Scientific reproduction outcome thumbnails">
+      <div class="motifTitle">Extracted → recreated → overlay</div>
+      <div class="motifStrip">
+        <a class="motifThumb" href="assets/extracted-paper-figure1.png"><img src="assets/extracted-paper-figure1.png" alt="Extracted paper Figure 1 thumbnail"><span>extracted</span></a>
+        <a class="motifThumb" href="assets/recreated-figure1.png"><img src="assets/recreated-figure1.png" alt="Recreated Figure 1 thumbnail"><span>recreated</span></a>
+        <a class="motifThumb" href="assets/figure1-digitized-overlay.png"><img src="assets/figure1-digitized-overlay.png" alt="Digitized overlay thumbnail"><span>overlay</span></a>
+      </div>
+    </aside>
+  </div>
+</header>
+
+<section id="demo" class="lab" aria-label="Interactive video and artifact explorer">
+  <div class="videoCard">
+    <div class="videoFrame">
+      <video id="demoVideo" controls preload="metadata" poster="assets/video-poster.png">
+        <source src="assets/agentic-reproduction-demo.mp4" type="video/mp4">
+        <track default kind="captions" src="assets/chapters.vtt" srclang="en" label="English">
+      </video>
+      <div class="startHint">▶ Start 5-minute reconstruction</div>
+    </div>
+    <div class="videoMeta"><span>Reconstructed Pi log playback: prompts pause, agent responses fast-forward, key bugs pause</span><span id="clock">00:00</span></div>
+  </div>
+  <aside class="artifactCard">
+    <div class="artifactHead"><h2 id="artifactTitle">User prompt as executable spec</h2><span id="artifactTime" class="timebadge">00:00</span></div>
+    <p class="jumpIntro">Click a moment to seek the video and update the artifact.</p>
+    <nav id="jumpGrid" class="jumpGrid" aria-label="Video chapter shortcuts"></nav>
+    <div id="artifactBody" class="artifactBody"></div>
+  </aside>
+</section>
+
+<main>
+  <div class="grid">
+    <article class="article">
+      <section id="why">
+        <h2>Why this workflow worked</h2>
+        <p>This was not just “make me a plot.” The prompt asked for a reproducible environment, local version control, test-driven development, physics properties, and visible artifacts. Those constraints made the agent leave a trail that can be audited.</p>
+        <div class="callout"><strong>Process matters:</strong> a good scientific-agent prompt specifies how trust should be earned, not just what final output should appear.</div>
+        <h3>Prompt choices that improved the result</h3>
+        <ul>
+          <li><strong>“Use UV.”</strong> This forced an explicit, recreatable Python environment rather than a mystery global install.</li>
+          <li><strong>“Use git, do not push.”</strong> This created an audit trail without publishing unfinished work.</li>
+          <li><strong>“Use TDD and commit after every cycle.”</strong> This made failures visible and prevented a giant unreviewable rewrite.</li>
+          <li><strong>“Use property-based tests.”</strong> For scientific code, exact answers are often unavailable. Physical monotonicity and limiting cases are excellent oracles.</li>
+          <li><strong>“Extract and digitize the figure.”</strong> This moved the comparison from subjective visual similarity to data-backed regression checks.</li>
+        </ul>
+      </section>
+
+      <section id="moments">
+        <h2>Key moments in the session</h2>
+        <h3>1. Equations became executable tests</h3>
+        <p>The paper’s κ-Köhler expression was translated into a public API. Tests checked the Kelvin coefficient, the κ=0 limiting case, and the large-droplet approximation for critical supersaturation.</p>
+        <pre class="code">S(D) = [(D³ - Dd³) / (D³ - Dd³(1 - κ))] exp(A/D)
+A = 4 σ M_w / (R T ρ_w)
+sc = max_D S(D) - 1</pre>
+
+        <h3>2. TDD exposed missing interfaces early</h3>
+        <p>The first tests failed because the module did not exist yet. That is a feature, not a bug: the failing test defined the intended public interface before the implementation was written.</p>
+        <pre class="code">ImportError: cannot import name 'kohler' from 'kappa_kohler_figure'</pre>
+
+        <h3>3. Property tests found a subtle numerical edge case</h3>
+        <p>Hypothesis generated a tiny positive value of κ. Mathematically it behaves like κ=0, but the numerical solver tried to bracket an interior maximum and failed. The fix was to define a tolerance for the Kelvin branch.</p>
+        <pre class="code">Falsifying example:
+  dry_diameter=4.904843734817048e-07
+  kappa=4.417464254787923e-65
+
+ValueError: f(a) and f(b) must have different signs
+
+Fix: if kappa <= 1e-12, use the Kelvin limit.</pre>
+
+        <h3>4. The plot was digitized, not just eyeballed</h3>
+        <p>The PDF page was rendered at 300 dpi. A crop of Figure 1 was calibrated using log-axis tick marks. Thresholding found dark curve crossings; the axis transform converted pixels into dry diameter values.</p>
+        <pre class="code">pdftoppm -f 3 -l 3 -png -r 300 acp-7-1961-2007.pdf extracted/page3
+threshold: grayscale &lt; 80
+x calibration: 0.01, 0.10, 1.00 μm ticks
+y calibration: 1.0%, 0.1% ticks</pre>
+
+        <h3>5. Visual agreement became a regression test</h3>
+        <p>The digitized points were saved as CSV and loaded by a test. The test is intentionally tolerant because the points are image-derived, but it still protects against gross physical or plotting regressions.</p>
+      </section>
+
+      <section id="artifacts-note">
+        <h2>Data and logs for deeper inspection</h2>
+        <p>The digitized Figure 1 test points are available as a linked CSV artifact rather than embedded in the page. The full exported HTML session log is also linked for anyone who wants to inspect the raw interaction in more detail.</p>
+        <p><a href="data/figure1_digitized_points.csv">Download the digitized test points CSV</a> · <a href="session_log.html">Open the full session log HTML</a></p>
+      </section>
+
+      <section id="transcript">
+        <h2>Conversation summary</h2>
+        <p>The user-facing exchange is summarized below. Tool calls and long pytest output are linked as artifacts so the main narrative stays readable.</p>
+        <details open><summary>Turn 1: initial research-code request</summary>
+          <div class="turn"><b>User:</b> I'm learning about cloud condensation nuclie and I want to study this paper @acp-7-1961-2007.pdf . The goal is to recreate figure 1 from this paper. I would like you to use a UV managed environment here and git to track your progress (do not push anything to any remote). I would like you to use /skill:tdd to write this package and commit after every test cycle. Additionally use property based tests to check for consistency in the physics (you may use hypothesis for python).</div>
+          <div class="turn"><b>Assistant:</b> Implemented a UV-managed Python package to recreate Figure 1 from <code>acp-7-1961-2007.pdf</code> using TDD and git commits. Validation: <code>uv run pytest</code> → 8 passed. Working tree clean. Commits made after each completed TDD cycle.</div>
+        </details>
+        <details><summary>Turn 2: extract and digitize</summary>
+          <div class="turn"><b>User:</b> Can you extract the figure from the paper, digitize it and use it to make some test points that you can tabulate for me?</div>
+          <div class="turn"><b>Assistant:</b> Done. I extracted/rendered Figure 1 from the PDF, digitized selected curve crossings, and added them as regression test points. Validation: <code>uv run pytest</code> → 10 passed.</div>
+        </details>
+        <details><summary>Turn 3: overlay</summary>
+          <div class="turn"><b>User:</b> Can you overlay these points as markers on a new figure over the one you just generated?</div>
+          <div class="turn"><b>Assistant:</b> Done — I generated <code>outputs/figure1_with_digitized_points.png</code>. The digitized paper points are shown as red open-circle markers over the recreated κ-Köhler curves. Validation: <code>uv run pytest</code> → 11 passed.</div>
+        </details>
+        <details><summary>Turn 4: polish the plot</summary>
+          <div class="turn"><b>User:</b> Now that you extracted plots for comparison can you use the /matplotlib skill to make the graph prettier. Copy some of the style elements from the actual paper, but you can improve it further include the overlayed points from the digitization</div>
+          <div class="turn"><b>Assistant:</b> Added a prettier overlay figure while preserving the digitized-points comparison and test validation.</div>
+        </details>
+        <details><summary>Turn 5: make this lesson</summary>
+          <div class="turn"><b>User:</b> This is great. Now I want you to do something very cool. Take our entire discussion so far and create a video + article that shows our discussion verbatim along with the artifacts ... Create the files but do not push anything to git.</div>
+        </details>
+        <p><a href="transcript.md">Open the redacted exported Pi session log</a> (tool calls/results included; hidden reasoning and image payloads omitted) · <a href="session_log.html">Open the full HTML session log</a>.</p>
+      </section>
+    </article>
+
+    <aside class="side">
+      <div class="box">
+        <h3>Artifacts</h3>
+        <a class="miniLink" href="assets/extracted-paper-figure1.png">Extracted paper figure</a>
+        <a class="miniLink" href="assets/recreated-figure1.png">Recreated Figure 1</a>
+        <a class="miniLink" href="assets/figure1-digitized-overlay.png">Overlay with digitized points</a>
+        <a class="miniLink" href="assets/figure1-pretty-overlay.png">Styled overlay figure</a>
+        <a class="miniLink" href="data/figure1_digitized_points.csv">Digitized test points CSV</a>
+        <a class="miniLink" href="transcript.md">Redacted exported Pi log</a>
+        <a class="miniLink" href="session_log.html">Full session log HTML</a>
+        <a class="miniLink" href="make_reconstructed_screencast.py">Screencast exporter script</a>
+      </div>
+      <div class="box">
+        <h3>Try it on a project</h3>
+        <p>Pick one figure from your own work. What would make its reproduction auditable? Write one test for the equation, one property for the physics, and one data-backed visual regression check.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script>
+const chapters = [
+  {t:0, label:'Prompt', title:'User prompt as executable spec', kind:'code', code:'Use UV\nUse git, do not push\nUse /skill:tdd\nCommit after every test cycle\nUse Hypothesis property tests', text:'The log pauses on the human prompt because this is where the workflow gets constrained.'},
+  {t:23, label:'UV + git', title:'Environment and audit trail', kind:'code', code:'git init\nuv init --package\nuv add numpy scipy matplotlib\nuv add --dev pytest hypothesis\ngit commit -m "Set up UV Python package"', text:'The agent creates a reproducible environment and checkpoints the setup in local git.'},
+  {t:30, label:'Equation', title:'κ-Köhler equation becomes a test target', kind:'code', code:'S(D) = [(D³ - Dd³) / (D³ - Dd³(1 - κ))] × exp(A/D)\nA = 4σMw/(RTρw)\nsc = max_D S(D)-1', text:'The physics from Eq. 6 becomes code plus tests for limiting cases.'},
+  {t:34, label:'RED', title:'First TDD failure', kind:'code', code:'ImportError: cannot import name kohler\n\nThe public module does not exist yet.\nThat is the intended RED state.', text:'The failing test defines the interface before implementation.'},
+  {t:46, label:'Tolerance', title:'A constants/tolerance mismatch', kind:'code', code:'comparison failed\nObtained: 2.099275064e-09\nExpected: 2.0979e-09 ± 1.0e-12\n\nFix: use a physically appropriate tolerance.', text:'Even simple constants need tolerances that match the precision of the source assumptions.'},
+  {t:122, label:'Extract', title:'Figure extraction prompt', kind:'img', src:'assets/extracted-paper-figure1.png', text:'The next user prompt asks to extract the published plot and turn it into test data.'},
+  {t:132, label:'Env bug', title:'System Python was unavailable', kind:'code', code:'/bin/bash: line 3: python: command not found\n\nFix: run image-processing snippets through\nuv run python', text:'The log shows an ordinary environment mistake and the repair.'},
+  {t:145, label:'Threshold', title:'Digitizing by thresholding', kind:'code', code:'render page at 300 dpi\ncalibrate log axes from visible ticks\nthreshold grayscale pixels < 80\nconvert pixel crossings → µm and %', text:'The plot comparison becomes numerical instead of purely visual.'},
+  {t:167, label:'CSV', title:'Digitized points become regression data', kind:'code', code:'tests/data/figure1_digitized_points.csv\ntests/test_digitized_figure_points.py\npytest → 10 passed', text:'The extracted points become executable checks against future regressions.'},
+  {t:197, label:'Overlay', title:'Overlay request', kind:'img', src:'assets/figure1-digitized-overlay.png', text:'The user asks to place the digitized paper points on the generated figure.'},
+  {t:210, label:'API bug', title:'Overlay API failure', kind:'code', code:'TypeError: recreate_figure1() got an unexpected keyword argument digitized_points\n\nFix: add keyword-only digitized_points parameter', text:'A small API failure drives a cleaner plotting interface.'},
+  {t:228, label:'11 passed', title:'Overlay validation', kind:'img', src:'assets/figure1-digitized-overlay.png', text:'The final overlay aligns the red digitized points with the generated curves and all tests pass.'},
+  {t:238, label:'Polish', title:'Style pass with matplotlib', kind:'img', src:'assets/figure1-pretty-overlay.png', text:'The session log includes a follow-up request to make the plot prettier while preserving the overlay validation.'},
+  {t:289, label:'Final', title:'Scientific reproduction complete', kind:'img', src:'assets/figure1-digitized-overlay.png', text:'The result is not just a figure: it is a versioned, tested, digitized reproduction workflow.'}
+];
+const video = document.getElementById('demoVideo');
+const videoFrame = video.closest('.videoFrame');
+const grid = document.getElementById('jumpGrid');
+const body = document.getElementById('artifactBody');
+const title = document.getElementById('artifactTitle');
+const timeBadge = document.getElementById('artifactTime');
+const clock = document.getElementById('clock');
+function fmt(t){const m=Math.floor(t/60), s=Math.floor(t%60); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+let currentArtifact = -1;
+function renderArtifact(i){
+  if (i === currentArtifact) return;
+  currentArtifact = i;
+  const c = chapters[i]; title.textContent = c.title; timeBadge.textContent = fmt(c.t);
+  body.innerHTML = c.kind === 'img' ? `<img src="${c.src}" alt="${c.title}"><p>${c.text}</p>` : `<pre>${c.code}</pre><p>${c.text}</p>`;
+  [...grid.children].forEach((b,j)=>{
+    const active = i===j;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-current', active ? 'true' : 'false');
+  });
+}
+chapters.forEach((c,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='jump'; b.innerHTML=`<b>${c.label}</b><span>${fmt(c.t)}</span>`; b.onclick=()=>{video.currentTime=c.t; video.play(); renderArtifact(i)}; grid.appendChild(b); });
+function activeIndex(t){ let idx=0; for(let i=0;i<chapters.length;i++){ if(t>=chapters[i].t) idx=i; } return idx; }
+video.addEventListener('play',()=>videoFrame.classList.add('isPlaying'));
+video.addEventListener('pause',()=>videoFrame.classList.remove('isPlaying'));
+video.addEventListener('timeupdate',()=>{ clock.textContent=fmt(video.currentTime); renderArtifact(activeIndex(video.currentTime)); });
+renderArtifact(0);
+</script>
+</body>
+</html>
