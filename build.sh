@@ -46,6 +46,12 @@ if [ -d "session-5/Agentic Scientific Reproduction Demo" ]; then
   cp -R "session-5/Agentic Scientific Reproduction Demo" "$OUT/session-5/"
 fi
 
+# Agent First Aid: student support page (self-contained single file).
+if [ -d agent-first-aid ]; then
+  mkdir -p "$OUT/agent-first-aid"
+  cp agent-first-aid/index.html "$OUT/agent-first-aid/"
+fi
+
 # Student-project thumbnails, once they exist:
 cp -R thumbs "$OUT/thumbs"
 

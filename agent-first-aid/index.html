@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agent First Aid — AI Coding Agents for Engineering Research</title>
+<meta name="description" content="A student-facing first-aid page for the course Agentic AI for Engineering Research. When you are stuck, take one safe next step with an AI assistant." />
+
+<!-- Fonts load from Google Fonts when online; falls back gracefully offline. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-0:#080b12;
+  --ink:#eef1f7;
+  --muted:#9aa6bb;
+  --faint:#586173;
+  --line:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.035);
+  --card-bd:rgba(255,255,255,.09);
+  --amber:#e8b04b;
+  --teal:#5fd2c2;
+  --indigo:#8ea0e8;
+  --rose:#d98aa8;
+  --display:"Bricolage Grotesque","Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:84px;}
+body{
+  font-family:var(--body);
+  background:var(--bg-0);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+a{color:var(--teal);text-decoration:none;}
+a:hover{text-decoration:underline;}
+code,pre,kbd{font-family:var(--mono);}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px;}
+
+/* ---------- Living background ---------- */
+.bg{
+  position:fixed;inset:-25%;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(46% 58% at 22% 16%, rgba(72,92,168,.34), transparent 70%),
+    radial-gradient(52% 54% at 84% 30%, rgba(26,118,118,.26), transparent 72%),
+    radial-gradient(40% 48% at 62% 8%, rgba(122,74,140,.18), transparent 70%),
+    var(--bg-0);
+}
+.grain{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Top nav ---------- */
+.topnav{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:11px clamp(16px,4vw,40px);
+  background:rgba(8,11,18,.72);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topnav .back{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--muted);
+  display:inline-flex;align-items:center;gap:8px;}
+.topnav .back:hover{color:var(--teal);text-decoration:none;}
+.topnav .back .ar{color:var(--amber);}
+.topnav .nav-actions{display:flex;gap:8px;}
+.btn-ghost{font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--muted);
+  border:1px solid var(--card-bd);border-radius:9px;padding:7px 12px;background:var(--card);
+  cursor:pointer;transition:.2s;}
+.btn-ghost:hover{border-color:rgba(95,210,194,.45);color:var(--teal);}
+
+/* ---------- Shell ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,40px) clamp(16px,4vw,40px) 80px;}
+
+/* ---------- Hero ---------- */
+header.hero{margin:clamp(8px,3vh,26px) 0 clamp(20px,4vh,40px);}
+.eyebrow{
+  font-family:var(--mono);font-size:clamp(10px,1vw,12.5px);
+  letter-spacing:.28em;text-transform:uppercase;color:var(--amber);
+  display:flex;align-items:center;gap:13px;margin-bottom:16px;
+}
+.eyebrow::before{content:"";width:42px;height:1px;background:var(--amber);opacity:.7;}
+.eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--teal);}
+h1{
+  font-family:var(--display);font-weight:800;line-height:1.02;letter-spacing:-.02em;
+  font-size:clamp(34px,6.4vmin,62px);
+  background:linear-gradient(95deg,var(--ink) 0%,var(--ink) 34%,var(--amber) 62%,var(--teal) 92%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero .lead{font-size:clamp(15px,1.5vw,19px);color:var(--muted);max-width:60ch;margin-top:16px;}
+.hero .lead b{color:var(--ink);font-weight:600;}
+.tagline{
+  margin-top:22px;border-left:3px solid var(--amber);padding:12px 18px;
+  background:linear-gradient(90deg,rgba(232,176,75,.07),transparent);
+  border-radius:0 12px 12px 0;font-family:var(--display);font-weight:600;
+  font-size:clamp(15px,1.7vw,21px);color:var(--ink);max-width:62ch;line-height:1.35;
+}
+
+/* ---------- Section headings ---------- */
+section{scroll-margin-top:78px;}
+.sec{margin-top:clamp(34px,6vh,60px);}
+.sec > h2{
+  font-family:var(--display);font-weight:700;letter-spacing:-.01em;
+  font-size:clamp(22px,2.8vw,31px);display:flex;align-items:center;gap:13px;
+}
+.sec > h2 .ix{font-family:var(--mono);font-size:.5em;color:var(--faint);font-weight:500;
+  border:1px solid var(--card-bd);border-radius:7px;padding:3px 8px;letter-spacing:.05em;}
+.sec > .blurb{color:var(--muted);margin-top:9px;max-width:68ch;}
+.sec p{margin-top:11px;max-width:70ch;}
+.sec p:first-child{margin-top:0;}
+.sec ul,.sec ol{margin:12px 0 4px;padding-left:22px;max-width:70ch;}
+.sec li{margin:6px 0;}
+.sec li::marker{color:var(--teal);}
+.kw{color:var(--ink);font-weight:600;}
+.flash{animation:flash 1.5s ease;}
+@keyframes flash{0%{background:rgba(95,210,194,.14);}100%{background:transparent;}}
+
+/* ---------- The loop ring ---------- */
+.loopring{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin-top:22px;}
+.loopstep{flex:1 1 150px;min-width:140px;position:relative;
+  background:var(--card);border:1px solid var(--card-bd);border-radius:14px;padding:14px 15px;
+  transition:.25s;}
+.loopstep:hover{border-color:rgba(95,210,194,.4);background:rgba(255,255,255,.05);}
+.loopstep .n{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:.1em;}
+.loopstep .t{font-family:var(--display);font-weight:700;font-size:16px;margin-top:5px;}
+.loopstep .d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.4;}
+.loopstep::after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);
+  color:var(--faint);font-family:var(--mono);z-index:2;}
+.loopstep:last-child::after{content:"⟲";color:var(--amber);}
+@media (max-width:760px){
+  .loopstep::after{content:"↓";right:auto;left:50%;bottom:-15px;top:auto;transform:translateX(-50%);}
+  .loopstep{flex-basis:100%;}
+}
+
+/* ---------- Layout: sticky TOC + content ---------- */
+.layout{display:grid;grid-template-columns:236px minmax(0,1fr);gap:clamp(20px,3vw,44px);
+  margin-top:clamp(30px,5vh,52px);align-items:start;}
+.toc{position:sticky;top:74px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;
+  font-size:13px;padding-right:6px;}
+.toc .tt{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:12px;}
+.toc a{display:block;color:var(--muted);padding:5px 11px;border-radius:8px;line-height:1.3;
+  border-left:2px solid transparent;margin-bottom:2px;transition:.18s;}
+.toc a:hover{color:var(--ink);background:rgba(255,255,255,.035);text-decoration:none;}
+.toc a.active{color:var(--teal);border-left-color:var(--teal);background:rgba(95,210,194,.07);}
+.toc a.lead-link{color:var(--amber);font-weight:600;}
+.toc a.lead-link.active{color:var(--amber);border-left-color:var(--amber);background:rgba(232,176,75,.08);}
+@media (max-width:1000px){
+  .layout{grid-template-columns:1fr;}
+  .toc{display:none;}
+}
+
+/* ---------- Prompt blocks ---------- */
+.prompt{margin:16px 0;border:1px solid var(--card-bd);border-radius:13px;overflow:hidden;
+  background:rgba(8,12,20,.6);}
+.prompt .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 13px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--card-bd);}
+.prompt .ph .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--teal);display:inline-flex;align-items:center;gap:7px;}
+.prompt .ph .lbl::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--teal);}
+.copybtn{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);
+  border:1px solid var(--card-bd);border-radius:8px;padding:5px 11px;background:rgba(255,255,255,.02);
+  cursor:pointer;transition:.18s;white-space:nowrap;}
+.copybtn:hover{border-color:rgba(95,210,194,.45);color:var(--teal);}
+.copybtn.done{color:var(--teal);border-color:rgba(95,210,194,.5);}
+.prompt pre{margin:0;padding:14px 15px;font-size:13px;line-height:1.6;color:var(--ink);
+  white-space:pre-wrap;word-break:break-word;overflow-x:auto;}
+.prompt pre .fill{color:var(--amber);}
+
+/* inline code */
+.sec code:not(pre code){background:rgba(255,255,255,.06);border:1px solid var(--card-bd);
+  border-radius:6px;padding:1px 6px;font-size:.86em;color:#ffe7b8;}
+
+/* ---------- Callouts ---------- */
+.callout{margin:18px 0;border-radius:13px;padding:15px 17px;border:1px solid var(--card-bd);
+  background:var(--card);position:relative;padding-left:50px;}
+.callout .ico{position:absolute;left:15px;top:15px;font-size:19px;line-height:1;}
+.callout .ch{font-family:var(--display);font-weight:700;font-size:15.5px;margin-bottom:4px;}
+.callout p{margin:5px 0 0;max-width:64ch;}
+.callout.warn{border-color:rgba(217,138,168,.4);background:rgba(217,138,168,.07);}
+.callout.warn .ch{color:var(--rose);}
+.callout.rule{border-color:rgba(95,210,194,.38);background:rgba(95,210,194,.06);}
+.callout.rule .ch{color:var(--teal);}
+.callout.human{border-color:rgba(142,160,232,.4);background:rgba(142,160,232,.07);}
+.callout.human .ch{color:var(--indigo);}
+.callout.tip{border-color:rgba(232,176,75,.36);background:rgba(232,176,75,.06);}
+.callout.tip .ch{color:var(--amber);}
+
+/* ---------- Concept chips ---------- */
+.concepts{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0;}
+.concepts .c{flex:1 1 230px;min-width:200px;background:var(--card);border:1px solid var(--card-bd);
+  border-radius:11px;padding:11px 13px;font-size:13.5px;}
+.concepts .c b{color:var(--teal);font-weight:600;}
+
+/* ---------- Real exchange (chat) ---------- */
+.exchange{margin:18px 0;border:1px solid var(--card-bd);border-radius:15px;overflow:hidden;
+  background:rgba(10,14,22,.5);}
+.exchange .xh{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--card-bd);background:rgba(255,255,255,.02);}
+.exchange .xh .lab{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--indigo);}
+.exchange .xh .real{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--faint);
+  border:1px solid var(--card-bd);border-radius:20px;padding:3px 10px;display:inline-flex;gap:6px;align-items:center;}
+.exchange .xh .real::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal);
+  box-shadow:0 0 0 0 rgba(95,210,194,.6);animation:pulse 2.4s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(95,210,194,.55);}70%{box-shadow:0 0 0 7px rgba(95,210,194,0);}100%{box-shadow:0 0 0 0 rgba(95,210,194,0);}}
+.exchange .xbody{padding:15px;display:flex;flex-direction:column;gap:13px;}
+.bubble{max-width:88%;border-radius:14px;padding:12px 15px;font-size:13.5px;line-height:1.55;}
+.bubble .who{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:6px;opacity:.85;}
+.bubble.student{align-self:flex-end;background:rgba(142,160,232,.13);border:1px solid rgba(142,160,232,.32);
+  border-bottom-right-radius:4px;}
+.bubble.student .who{color:var(--indigo);}
+.bubble.agent{align-self:flex-start;background:rgba(95,210,194,.09);border:1px solid rgba(95,210,194,.28);
+  border-bottom-left-radius:4px;}
+.bubble.agent .who{color:var(--teal);}
+.bubble p{margin:8px 0 0;max-width:none;}
+.bubble p:first-of-type{margin-top:0;}
+.bubble ul,.bubble ol{margin:8px 0 2px;padding-left:20px;}
+.bubble li{margin:4px 0;}
+.bubble pre{margin:9px 0;background:rgba(0,0,0,.32);border:1px solid var(--card-bd);border-radius:9px;
+  padding:10px 12px;font-size:12px;line-height:1.5;overflow-x:auto;color:#d8e9e5;}
+.bubble code:not(pre code){background:rgba(255,255,255,.08);border-radius:5px;padding:1px 5px;font-size:.85em;}
+.bubble strong{color:var(--ink);}
+
+/* ---------- Flowchart (triage) ---------- */
+.flowwrap{margin-top:22px;border:1px solid var(--card-bd);border-radius:18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012));
+  padding:clamp(18px,3vw,30px) clamp(14px,3vw,28px) clamp(22px,3vw,34px);overflow:hidden;}
+.fc-stage{position:relative;max-width:760px;margin:0 auto;}
+.fc-wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible;}
+.fc-wires path{fill:none;stroke:rgba(154,166,187,.32);stroke-width:1.6;transition:stroke .2s,stroke-width .2s;}
+.fc-wires path.lit{stroke:var(--teal);stroke-width:2.4;}
+.fc-grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:14px clamp(40px,8vw,90px);}
+.fc-start,.fc-end{grid-column:1 / -1;justify-self:center;text-align:center;max-width:340px;}
+.fc-start{background:linear-gradient(180deg,rgba(232,176,75,.16),rgba(232,176,75,.06));
+  border:1px solid rgba(232,176,75,.45);border-radius:14px;padding:14px 20px;margin-bottom:8px;}
+.fc-start .big{font-family:var(--display);font-weight:800;font-size:19px;color:var(--amber);}
+.fc-start .sub{font-size:12.5px;color:var(--muted);margin-top:3px;}
+.fc-node{display:flex;align-items:center;gap:12px;text-align:left;color:var(--ink);
+  background:var(--card);border:1px solid var(--card-bd);border-radius:13px;padding:13px 14px;
+  cursor:pointer;transition:.22s;position:relative;}
+.fc-node:hover{border-color:rgba(95,210,194,.5);background:rgba(255,255,255,.06);
+  transform:translateY(-2px);text-decoration:none;box-shadow:0 12px 30px rgba(0,0,0,.3);}
+.fc-node .em{font-size:21px;flex:0 0 auto;line-height:1;}
+.fc-node .nm{display:flex;flex-direction:column;min-width:0;}
+.fc-node .q{font-weight:600;font-size:14px;line-height:1.25;color:var(--ink);}
+.fc-node .go{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.03em;margin-top:3px;}
+.fc-node:hover .go{color:var(--teal);}
+.fc-node .arr{margin-left:auto;color:var(--faint);font-family:var(--mono);transition:.22s;flex:0 0 auto;}
+.fc-node:hover .arr{color:var(--teal);transform:translateX(3px);}
+.fc-end{margin-top:8px;background:linear-gradient(180deg,rgba(142,160,232,.15),rgba(142,160,232,.05));
+  border:1px solid rgba(142,160,232,.42);border-radius:14px;padding:13px 18px;cursor:pointer;transition:.22s;}
+.fc-end:hover{background:rgba(142,160,232,.2);text-decoration:none;transform:translateY(-2px);}
+.fc-end .big{font-family:var(--display);font-weight:700;font-size:15.5px;color:var(--indigo);}
+.fc-end .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+@media (max-width:560px){
+  .fc-grid{grid-template-columns:1fr;gap:11px;}
+  .fc-start,.fc-end{justify-self:stretch;max-width:none;}
+}
+
+/* ---------- Glossary ---------- */
+.glossary{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px;margin-top:18px;}
+.gterm{background:var(--card);border:1px solid var(--card-bd);border-radius:12px;padding:13px 15px;}
+.gterm dt{font-family:var(--display);font-weight:700;color:var(--teal);font-size:15px;}
+.gterm dd{margin:5px 0 0;font-size:13px;color:var(--muted);line-height:1.5;}
+
+/* ---------- Quick reference (printable) ---------- */
+.quickref{margin-top:clamp(34px,6vh,60px);border:1px solid var(--amber);border-radius:18px;
+  background:linear-gradient(180deg,rgba(232,176,75,.06),rgba(255,255,255,.015));
+  padding:clamp(20px,3vw,32px);}
+.quickref .qhead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.quickref h2{font-family:var(--display);font-weight:800;font-size:clamp(20px,2.5vw,28px);color:var(--amber);}
+.quickref .qsub{color:var(--muted);font-size:13.5px;margin-top:4px;max-width:58ch;}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:20px;}
+.qcard{border:1px solid var(--card-bd);border-radius:12px;padding:14px;background:rgba(8,12,20,.4);}
+.qcard .qt{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--teal);margin-bottom:9px;}
+.qcard pre{margin:0;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:var(--ink);}
+.qcard pre .fill{color:var(--amber);}
+
+/* ---------- Footer ---------- */
+footer.pg{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:.03em;
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+footer.pg .aside{color:var(--faint);}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *{animation:none !important;}
+}
+
+/* ---------- Print: one-page quick reference only ---------- */
+@media print{
+  .bg,.grain,.topnav,.toc,.fc-wires{display:none !important;}
+  body{background:#fff;color:#111;}
+  body *{visibility:hidden;}
+  #quickref,#quickref *{visibility:visible;}
+  #quickref{position:absolute;left:0;top:0;width:100%;border:none;background:#fff;padding:0;}
+  #quickref h2,#quickref .qcard .qt{color:#111;}
+  #quickref .qsub{color:#444;}
+  #quickref .qcard{border:1px solid #bbb;background:#fff;break-inside:avoid;}
+  #quickref pre{color:#111;}
+  #quickref pre .fill{color:#9a6b00;}
+  #quickref .printbtn{display:none;}
+  @page{margin:14mm;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="grain"></div>
+
+<nav class="topnav">
+  <a class="back" href="../index.html"><span class="ar">←</span> AI Coding Agents for Engineering Research</a>
+  <div class="nav-actions">
+    <a class="btn-ghost" href="#flowchart">Where are you stuck?</a>
+    <button class="btn-ghost" id="printTop" type="button">Print the card</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Student Support <span class="dot"></span> Agent First Aid</div>
+    <h1>Agent&nbsp;First&nbsp;Aid</h1>
+    <p class="lead">A no-judgment field guide for when you are stuck. New to terminals, GitHub, Python,
+      coding agents, Markdown, VS&nbsp;Code, WSL, or Codespaces? <b>This page is for you.</b>
+      It will not teach you everything about computing — it helps you take <b>one safe next step</b>
+      with an AI assistant.</p>
+    <p class="tagline">When you are stuck, your first job is not to know the answer.
+      Your first job is to ask a useful next question.</p>
+  </header>
+
+  <!-- ============ THE LOOP ============ -->
+  <section class="sec" id="loop">
+    <h2><span class="ix">START</span> The Agent First Aid loop</h2>
+    <p class="blurb">Almost every fix in this course is the same five-move loop. When in doubt, run the loop.</p>
+
+    <div class="loopring" aria-label="The first aid loop: state, inspect, one small reversible step, verify, document">
+      <div class="loopstep"><div class="n">01</div><div class="t">State</div><div class="d">Say what you were trying to do — out loud or to the agent.</div></div>
+      <div class="loopstep"><div class="n">02</div><div class="t">Inspect</div><div class="d">Paste exactly what happened. Errors are data, not failure.</div></div>
+      <div class="loopstep"><div class="n">03</div><div class="t">One small step</div><div class="d">Ask for a single <b>reversible</b> next action — not the whole fix.</div></div>
+      <div class="loopstep"><div class="n">04</div><div class="t">Verify</div><div class="d">Check whether the step actually worked.</div></div>
+      <div class="loopstep"><div class="n">05</div><div class="t">Document</div><div class="d">Note what you changed so future-you can retrace it.</div></div>
+    </div>
+
+    <p>Stuck right now and not sure which kind of stuck? Paste this into your AI assistant. It works for almost anything.</p>
+
+    <div class="prompt">
+      <div class="ph"><span class="lbl">Universal "I am stuck" prompt</span><button class="copybtn" type="button">Copy</button></div>
+      <pre>I am taking a course on Agentic AI for Engineering Research. I am stuck.
+
+What I am trying to do:
+<span class="fill">[DESCRIBE GOAL]</span>
+
+What I tried:
+<span class="fill">[PASTE STEPS OR COMMANDS]</span>
+
+What happened:
+<span class="fill">[PASTE ERROR / SCREENSHOT DESCRIPTION / UNEXPECTED RESULT]</span>
+
+I am new to some of these tools. Please explain what is probably happening in plain language. Then give me exactly one safe next step and tell me how to check whether it worked.</pre>
+    </div>
+  </section>
+
+  <!-- ============ FLOWCHART ============ -->
+  <section class="sec" id="flowchart">
+    <h2><span class="ix">MAP</span> Where are you stuck?</h2>
+    <p class="blurb">Pick the symptom that matches. Each one jumps to the move that fixes it — and shows a
+      <b>real exchange</b> with a coding agent so you can see what "good" looks like.</p>
+
+    <div class="flowwrap">
+      <div class="fc-stage">
+        <svg class="fc-wires" id="fcWires" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="fc-grid" id="fcGrid">
+
+          <div class="fc-start">
+            <div class="big">I'm stuck 😖</div>
+            <div class="sub">What's happening right now?</div>
+          </div>
+
+          <a class="fc-node" href="#where" data-flash="where">
+            <span class="em">🧭</span>
+            <span class="nm"><span class="q">I don't know <em>where</em> to do this</span><span class="go">browser? terminal? GitHub? →</span></span>
+            <span class="arr">→</span>
+          </a>
+          <a class="fc-node" href="#error" data-flash="error">
+            <span class="em">⚠️</span>
+            <span class="nm"><span class="q">I got an error message</span><span class="go">paste it, don't panic →</span></span>
+            <span class="arr">→</span>
+          </a>
+          <a class="fc-node" href="#toomuch" data-flash="toomuch">
+            <span class="em">🌊</span>
+            <span class="nm"><span class="q">The answer was too much</span><span class="go">shrink it to one step →</span></span>
+            <span class="arr">→</span>
+          </a>
+          <a class="fc-node" href="#reversible" data-flash="reversible">
+            <span class="em">🔁</span>
+            <span class="nm"><span class="q">The agent wants to change/delete things</span><span class="go">is it reversible? →</span></span>
+            <span class="arr">→</span>
+          </a>
+          <a class="fc-node" href="#broke" data-flash="broke">
+            <span class="em">🧯</span>
+            <span class="nm"><span class="q">I think I broke something</span><span class="go">inspect before you fix →</span></span>
+            <span class="arr">→</span>
+          </a>
+          <a class="fc-node" href="#translate" data-flash="translate">
+            <span class="em">🌐</span>
+            <span class="nm"><span class="q">I don't understand the answer</span><span class="go">ask for a translation →</span></span>
+            <span class="arr">→</span>
+          </a>
+          <a class="fc-node" href="#scope" data-flash="scope">
+            <span class="em">🎯</span>
+            <span class="nm"><span class="q">My task is too vague</span><span class="go">turn a wish into a task →</span></span>
+            <span class="arr">→</span>
+          </a>
+          <a class="fc-node" href="#verify" data-flash="verify">
+            <span class="em">🔬</span>
+            <span class="nm"><span class="q">Is the agent's output even correct?</span><span class="go">verify before you trust →</span></span>
+            <span class="arr">→</span>
+          </a>
+
+          <a class="fc-end" href="#human">
+            <div class="big">🧑‍🏫 Still stuck after 2–3 honest tries?</div>
+            <div class="sub">That's a signal, not a failure — here's when to ask a human.</div>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout">
+
+    <!-- ----- Sticky TOC ----- -->
+    <nav class="toc" aria-label="On this page">
+      <div class="tt">On this page</div>
+      <a href="#loop" class="lead-link">The first aid loop</a>
+      <a href="#flowchart" class="lead-link">Where are you stuck?</a>
+      <a href="#where">I don't know where to type this</a>
+      <a href="#error">I got an error message</a>
+      <a href="#toomuch">The agent gave me too much</a>
+      <a href="#reversible">The agent wants to change things</a>
+      <a href="#broke">I'm afraid I broke something</a>
+      <a href="#translate">I don't understand the answer</a>
+      <a href="#github">Help with GitHub</a>
+      <a href="#python">Help with Python</a>
+      <a href="#website">Help with my course website</a>
+      <a href="#scope">Turn a research task into a task</a>
+      <a href="#verify">Verify the agent's work</a>
+      <a href="#human">When to ask a human</a>
+      <a href="#nopaste">What not to paste</a>
+      <a href="#glossary">Beginner glossary</a>
+      <a href="#quickref" class="lead-link">One-page quick reference</a>
+    </nav>
+
+    <!-- ----- Content ----- -->
+    <div class="content">
+
+      <!-- WHERE -->
+      <section class="sec" id="where">
+        <h2><span class="ix">01</span> I don't know where to type this</h2>
+        <p class="blurb">The instruction is clear; you just can't tell which window it belongs in. Totally normal — the same words mean different places.</p>
+
+        <div class="concepts">
+          <div class="c"><b>"Ask the model"</b> → a chat box (browser or the chat panel in your agent tool).</div>
+          <div class="c"><b>"Edit the file"</b> → the GitHub web editor, VS&nbsp;Code, or Codespaces.</div>
+          <div class="c"><b>"Run this command"</b> → a <b>terminal</b>, not a chat box.</div>
+          <div class="c"><b>"Commit your changes"</b> → the GitHub web UI, or a <code>git</code> command in a terminal.</div>
+          <div class="c"><b>"Run the notebook cell"</b> → inside the Jupyter / notebook interface.</div>
+        </div>
+
+        <div class="prompt">
+          <div class="ph"><span class="lbl">"Where does this go?" prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>I was told to do this:
+
+<span class="fill">[PASTE INSTRUCTION]</span>
+
+I do not know where to do it: browser, GitHub, VS Code, terminal, WSL, Codespaces, or notebook. Please tell me where this action belongs, what I should click or type, and what I should expect to see if it works.</pre>
+        </div>
+
+        <div class="exchange">
+          <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
+          <div class="xbody">
+            <div class="bubble student"><div class="who">Student</div>
+              <p>My TA told me: "clone the repo, create a branch, install dependencies, run the local server, commit your changes, and open a pull request." I genuinely don't know where I'm supposed to do any of this. Is this in the browser? GitHub? The black terminal window? Help.</p>
+            </div>
+            <div class="bubble agent"><div class="who">Agent</div>
+              <p>Welcome — this is a really common place to feel lost, and you're not doing anything wrong. The short answer: almost all of it happens in <strong>Codespaces</strong> (a full coding environment that runs in your browser), and most of the commands go in the <strong>terminal</strong> (that black window at the bottom).</p>
+              <p>Let's just do the very first step: open your Codespace.</p>
+              <ol>
+                <li>Go to your repo on <strong>GitHub</strong> (the website) in your browser.</li>
+                <li>Click the green <strong><code>&lt; &gt; Code</code></strong> button.</li>
+                <li>Pick the <strong>Codespaces</strong> tab, then click <strong>Create codespace on main</strong>.</li>
+              </ol>
+              <p><strong>What to expect:</strong> a new browser tab opens with something that looks like VS&nbsp;Code. It takes a minute or two to load. When it's ready, you'll see your project files on the left.</p>
+              <p>Here's the nice part: opening a Codespace usually <em>clones the repo for you</em>, so the first item on your TA's list is already handled.</p>
+              <p>Once it's loaded, tell me what you see and we'll create your branch together. You've got this!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ERROR -->
+      <section class="sec" id="error">
+        <h2><span class="ix">02</span> I got an error message</h2>
+        <p class="blurb">An error is the computer telling you exactly what it tripped on. It is information, not a verdict on you.</p>
+        <p>One rule that fixes most error questions: <span class="kw">paste the full error, not a paraphrase.</span> The exact text usually contains the answer.</p>
+
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Error prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>Here is the command or action I tried:
+
+<span class="fill">[COMMAND OR ACTION]</span>
+
+Here is the full error message:
+
+<span class="fill">[PASTE ERROR]</span>
+
+Please do four things:
+1. Explain the error in plain English.
+2. Identify the most likely cause.
+3. Give me one safe next step.
+4. Tell me how to check whether the problem is fixed.</pre>
+        </div>
+
+        <div class="callout warn">
+          <span class="ico">🔒</span>
+          <div class="ch">Do not paste secrets</div>
+          <p>Never paste passwords, API keys, private tokens, unpublished sensitive data, or human-subject
+            data into a public AI assistant. If an error contains a secret, redact it before you share it.</p>
+        </div>
+
+        <div class="exchange">
+          <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
+          <div class="xbody">
+            <div class="bubble student"><div class="who">Student</div>
+              <p>I'm trying to run the first cell of the analysis notebook for my project and I keep getting this. I have no idea what it means.</p>
+              <pre>ModuleNotFoundError: No module named 'pandas'</pre>
+              <p>What do I do?</p>
+            </div>
+            <div class="bubble agent"><div class="who">Agent</div>
+              <p>That error just means Python can't find <strong>pandas</strong> — a data library your notebook needs — because it isn't installed in your environment yet. Totally normal, and easy to fix.</p>
+              <p>In a new notebook cell, run this and then press Shift+Enter:</p>
+              <pre>%pip install pandas</pre>
+              <p>The <code>%pip</code> (instead of plain <code>pip</code>) makes sure it installs into the <em>same</em> place your notebook is running from, which avoids a common headache.</p>
+              <p><strong>How to check it worked:</strong></p>
+              <ul>
+                <li>You should see a line ending in something like <code>Successfully installed pandas-...</code></li>
+                <li>Now re-run your first cell — the <code>ModuleNotFoundError</code> should be gone.</li>
+              </ul>
+              <p>If it still errors after that, tell me what the new message says and we'll take the next step together.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TOO MUCH -->
+      <section class="sec" id="toomuch">
+        <h2><span class="ix">03</span> The agent gave me too much</h2>
+        <p class="blurb">A wall of text is not your fault and not the only option. You are allowed to constrain the assistant.</p>
+
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Shrink it to one step</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>That was too much. Give me only the next action, then stop. Do not explain extra background unless I ask.</pre>
+        </div>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Switch to tutor mode</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>Please switch to tutor mode. Ask me to report what I see after each step before giving the next step.</pre>
+        </div>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">No assumed knowledge</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>I am new to this. Do not assume I know Git, Python, Bash, WSL, VS Code, or package managers. Use plain language and one step at a time.</pre>
+        </div>
+
+        <div class="exchange">
+          <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
+          <div class="xbody">
+            <div class="bubble student"><div class="who">Student</div>
+              <p>That was way too much. I'm overwhelmed and I don't know which part to do first. Can you just give me ONE thing to do?</p>
+            </div>
+            <div class="bubble agent"><div class="who">Agent</div>
+              <p>Here's the one thing — and only this one thing:</p>
+              <p><strong>Open your terminal and type <code>python --version</code>, then hit Enter.</strong></p>
+              <p>That's it. Don't worry about anything else from my earlier message yet.</p>
+              <p>You'll know it worked if you see something like <code>Python 3.11.5</code> print out (any number is fine).</p>
+              <p>If instead you see an error like "command not found," that's totally okay too — it just tells us where to start.</p>
+              <p>Reply back with whatever shows up on your screen, and I'll give you the next single step from there. You've got this! 🙂</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REVERSIBLE -->
+      <section class="sec" id="reversible">
+        <h2><span class="ix">04</span> The agent wants to change things</h2>
+        <p class="blurb">Agents can edit files, delete files, install packages, force-push, or overwrite notebooks. Confident tone ≠ safe action.</p>
+
+        <div class="callout rule">
+          <span class="ico">🛟</span>
+          <div class="ch">The reversibility rule</div>
+          <p>Before you let an agent change files, delete things, install packages, force-push, overwrite
+            notebooks, or touch data — ask <b>what will change</b> and <b>whether it can be undone</b>. Reversible first, always.</p>
+        </div>
+
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Before-I-act safety prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>Before I do this, tell me:
+1. What files, settings, or data this action may change.
+2. Whether the action is reversible.
+3. How I can inspect or back up the current state first.
+4. What the safest smaller version of this action would be.</pre>
+        </div>
+
+        <div class="exchange">
+          <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
+          <div class="xbody">
+            <div class="bubble student"><div class="who">Student</div>
+              <p>Another agent told me to run <code>git checkout -- .</code> and also <code>pip freeze &gt; requirements.txt</code> to "fix my setup." Before I run anything: what will these actually change, and can I undo it if it goes wrong?</p>
+            </div>
+            <div class="bubble agent"><div class="who">Agent</div>
+              <p><code>git checkout -- .</code> and <code>pip freeze &gt; requirements.txt</code> do two very different things, and one of them is the risky one.</p>
+              <p><strong><code>git checkout -- .</code></strong></p>
+              <ul>
+                <li><em>What it changes:</em> throws away all uncommitted edits to tracked files in your working directory, reverting them to the last commit.</li>
+                <li><em>Reversible?</em> <strong>No.</strong> Discarded changes that were never committed are gone for good. (Untracked/new files aren't touched, but anything you edited-but-didn't-commit is.)</li>
+                <li><em>Inspect first:</em>
+                  <pre>git status        # see what would be lost
+git stash         # safely tuck changes aside instead of deleting</pre>
+                  <code>git stash</code> is the smaller, reversible version — you can bring them back with <code>git stash pop</code>.</li>
+              </ul>
+              <p><strong><code>pip freeze &gt; requirements.txt</code></strong></p>
+              <ul>
+                <li><em>What it changes:</em> overwrites <code>requirements.txt</code> with the exact package versions in your current environment.</li>
+                <li><em>Reversible?</em> Yes, if the file is tracked in git — <code>git checkout requirements.txt</code> restores it. Back it up first to be safe:
+                  <pre>cp requirements.txt requirements.backup.txt</pre></li>
+              </ul>
+              <p>So: the pip command is low-stakes. The <code>git checkout</code> is the one to pause on. Run <code>git status</code> first, and if there's any work you care about, <code>git stash</code> instead of checkout.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BROKE -->
+      <section class="sec" id="broke">
+        <h2><span class="ix">05</span> I'm afraid I broke something</h2>
+        <p class="blurb">Recovery before perfection. The first move is never "fix it" — it's "look at it." Inspecting is always safe.</p>
+
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Inspect-first prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>I think I may have broken something. Do not suggest fixes yet.
+
+Please help me inspect the current state first. Tell me what information to collect, what commands or views are safe, and how to avoid making things worse.
+
+Context:
+<span class="fill">[WHAT I WAS TRYING TO DO]</span>
+
+What changed:
+<span class="fill">[WHAT I THINK HAPPENED]</span></pre>
+        </div>
+
+        <p>Safe things to look at before changing anything:</p>
+        <ul>
+          <li>Look at the <span class="kw">file diff</span> — what actually changed.</li>
+          <li>Check <span class="kw">Git status</span>.</li>
+          <li>Open the <span class="kw">website preview</span>.</li>
+          <li>Compare against the <span class="kw">last committed version</span>.</li>
+          <li>Ask the agent to <span class="kw">explain the diff</span> before you accept it.</li>
+        </ul>
+
+        <div class="exchange">
+          <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
+          <div class="xbody">
+            <div class="bubble student"><div class="who">Student</div>
+              <p>I think I broke everything. I was following commands an agent gave me to "clean up" my repo and now my edits to index.html seem to be GONE and git is showing a bunch of scary red text. Please tell me how to undo this!!</p>
+            </div>
+            <div class="bubble agent"><div class="who">Agent</div>
+              <p>Don't worry, your edits are almost certainly recoverable, and the red text is just Git describing the current state, not an error. In Git, work that was ever committed is very hard to truly lose, and even uncommitted changes often leave traces we can check. Let's look before we touch anything.</p>
+              <p>Could you run these read-only commands (they only show information, they change nothing) and paste back the full output?</p>
+              <pre>git status
+git log --oneline -10
+git stash list</pre>
+              <p>A couple of quick definitions: <code>git status</code> shows your current files (the "red text" is usually just modified or untracked files), <code>git log</code> lists recent commits (saved snapshots), and <code>git stash list</code> shows work that may have been tucked away by that "clean up."</p>
+              <p>One question: had you saved your <code>index.html</code> edits with a commit, or were they unsaved when this happened? Either way, don't run any more agent commands for now. Once I see the output above, I can tell you exactly where your edits are and the safest way to bring them back.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRANSLATE -->
+      <section class="sec" id="translate">
+        <h2><span class="ix">06</span> I don't understand the answer</h2>
+        <p class="blurb">Silently nodding is the trap. Asking the agent to translate itself is a skill, not a weakness.</p>
+
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Translate to beginner language</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>Please translate your answer into beginner language. Define any technical term before using it.</pre>
+        </div>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Analogy + action</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>Explain this using an analogy and then give me the practical action I should take.</pre>
+        </div>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Essential vs background</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>Which parts of your answer are essential for me to do now, and which parts are background?</pre>
+        </div>
+      </section>
+
+      <!-- GITHUB -->
+      <section class="sec" id="github">
+        <h2><span class="ix">07</span> Help with GitHub</h2>
+        <p class="blurb">You do not need all of Git. You need five words and the courage to make a small change.</p>
+        <div class="concepts">
+          <div class="c">A <b>repository</b> is a project folder with history.</div>
+          <div class="c">A <b>commit</b> is a saved checkpoint.</div>
+          <div class="c">A <b>branch</b> is a separate line of work.</div>
+          <div class="c">A <b>diff</b> shows what changed.</div>
+          <div class="c">A <b>pull request</b> is a reviewable proposed change.</div>
+        </div>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">GitHub help prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>I am working in a GitHub repository for a course. Please explain what I need to do in beginner language.
+
+My goal:
+<span class="fill">[GOAL]</span>
+
+Current situation:
+<span class="fill">[WHAT I SEE]</span>
+
+Please tell me the safest way to make a small change, inspect the diff, and commit it.</pre>
+        </div>
+      </section>
+
+      <!-- PYTHON -->
+      <section class="sec" id="python">
+        <h2><span class="ix">08</span> Help with Python</h2>
+        <p class="blurb">Python here is a tool for making analyses reproducible — not a programming-identity test.</p>
+        <div class="concepts">
+          <div class="c">A Python file usually ends in <b>.py</b>.</div>
+          <div class="c">A notebook usually ends in <b>.ipynb</b>.</div>
+          <div class="c">A <b>package</b> is reusable code someone else wrote.</div>
+          <div class="c">An <b>environment</b> controls which packages are available.</div>
+          <div class="c">A plot or table should be <b>reproducible</b> from data and code.</div>
+        </div>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Understand-this-code prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>I am new to Python. I need to understand this file/notebook/script enough to use it safely.
+
+Please explain:
+1. What this code is trying to do.
+2. What inputs it needs.
+3. What outputs it creates.
+4. What assumptions or units I should check.
+5. One small change I can safely make to test my understanding.
+
+Here is the code or file summary:
+<span class="fill">[PASTE CODE OR DESCRIPTION]</span></pre>
+        </div>
+      </section>
+
+      <!-- WEBSITE -->
+      <section class="sec" id="website">
+        <h2><span class="ix">09</span> Help with my course website</h2>
+        <p class="blurb">Add a page, a heading, an image, a table; link a notebook; fix a broken page; publish an update. Smallest safe change wins.</p>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Website change prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>I am building a course website for Agentic AI for Engineering Research. I want to add or fix this:
+
+<span class="fill">[DESCRIBE CHANGE]</span>
+
+Please give me the smallest safe change to make. Tell me which file likely needs editing, what to add, and how to preview or verify the result.</pre>
+        </div>
+      </section>
+
+      <!-- SCOPE -->
+      <section class="sec" id="scope">
+        <h2><span class="ix">10</span> Turn a research task into an agent task</h2>
+        <p class="blurb">Agents are much better at <b>tasks</b> than at <b>wishes</b>. This is the bridge from setup to real research work.</p>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Scope-a-task prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>I want to use an AI agent to help with this research task:
+
+<span class="fill">[DESCRIBE TASK]</span>
+
+Please help me turn it into a well-scoped agent task. Include:
+1. A concise task statement.
+2. Context the agent needs.
+3. Inputs and outputs.
+4. Acceptance criteria.
+5. Risks or things the agent might get wrong.
+6. A smaller first version of the task.</pre>
+        </div>
+
+        <div class="exchange">
+          <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
+          <div class="xbody">
+            <div class="bubble student"><div class="who">Student</div>
+              <p>I want to use the agent to help me analyze my survey data, but every time I just say "analyze my survey data" I get something useless. How do I turn this into a real task?</p>
+            </div>
+            <div class="bubble agent"><div class="who">Agent</div>
+              <p><strong>Make "analyze my survey data" into a real task</strong></p>
+              <p>The fix is specificity. "Analyze my survey data" gives the agent no goal, no data shape, and no idea what "done" looks like — so it guesses. Here's a template you can fill in and hand over.</p>
+              <p><strong>1. Task statement (one line)</strong><br>"Summarize responses to my 12-question post-course survey and test whether reported confidence differs between undergrad and grad students."</p>
+              <p><strong>2. Context the agent needs</strong><br>What the survey is, who took it, how many responses, and what you actually want to learn. State the one or two questions that matter most.</p>
+              <p><strong>3. Inputs &amp; outputs</strong></p>
+              <ul>
+                <li><strong>Input:</strong> <code>survey.csv</code>, one row per respondent. Note which columns are Likert (1–5), categorical, or free text.</li>
+                <li><strong>Output:</strong> a short summary table + 2–3 plots, plus a paragraph of findings. Specify the file (<code>results.md</code>, figures as PNG).</li>
+              </ul>
+              <p><strong>4. Acceptance criteria</strong></p>
+              <ul>
+                <li>Every question summarized (n, mean/median, or category counts).</li>
+                <li>Missing data reported, not silently dropped.</li>
+                <li>Any statistical test names the method and assumptions.</li>
+              </ul>
+              <p><strong>5. Likely failure modes</strong><br>Misreading Likert text as categories, dropping blanks silently, over-claiming significance from tiny groups, inventing columns. Tell it to ask before guessing.</p>
+              <p><strong>6. Smaller first version</strong><br>Start with: "Load the CSV, list every column with its type and a one-line summary, and flag data-quality issues." Once that's right, ask for the analysis.</p>
+              <p>Want help filling this in for your actual file?</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VERIFY -->
+      <section class="sec" id="verify">
+        <h2><span class="ix">11</span> Verify the agent's work</h2>
+        <div class="callout tip">
+          <span class="ico">🔬</span>
+          <div class="ch">This is the most important section on the page</div>
+          <p>Agent output is a <b>draft or a hypothesis</b>. It is not verified research evidence until you check it.
+            A pretty plot is not a result. Matplotlib can lie in high resolution.</p>
+        </div>
+        <p>Verification is not asking "does this look okay?" It is asking <span class="kw">"how could this be wrong?"</span> Some ways to check:</p>
+        <ul>
+          <li>Run a test, or reproduce a simple case by hand.</li>
+          <li>Compare with known values, a spreadsheet, or a published paper.</li>
+          <li>Check units and dimensions.</li>
+          <li>Inspect a plot for impossible values.</li>
+          <li>Check citations manually.</li>
+          <li>Ask a second model to critique the result.</li>
+          <li>Ask the agent what would <b>falsify</b> its answer.</li>
+        </ul>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Verification-plan prompt</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>The agent produced this result:
+
+<span class="fill">[DESCRIBE OR PASTE RESULT]</span>
+
+Please help me design a verification plan. I want checks that could catch plausible errors, not just confirm the result. Include at least one simple sanity check and one stronger check.</pre>
+        </div>
+
+        <div class="exchange">
+          <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
+          <div class="xbody">
+            <div class="bubble student"><div class="who">Student</div>
+              <p>An agent generated a plot of jet fuel burn versus cruise altitude for my project and it looks really clean and convincing. How do I actually know it's correct before I put it in my portfolio?</p>
+            </div>
+            <div class="bubble agent"><div class="who">Agent</div>
+              <p>Treat the agent's plot as a hypothesis, not a verified result. Here's how I'd pressure-test it before it goes anywhere near your portfolio.</p>
+              <p><strong>Quick sanity checks (catch the obvious):</strong></p>
+              <ul>
+                <li><strong>Units &amp; axes:</strong> Is fuel burn in sensible units (kg/hr? kg/nm?) and altitude in ft or km? Mislabeled axes are the #1 silent error.</li>
+                <li><strong>Ranges:</strong> Do the numbers sit in a plausible band for your aircraft class? A narrow-body burning 200 kg/hr or 20,000 kg/hr should both make you suspicious.</li>
+                <li><strong>Trend shape:</strong> Burn per distance generally <em>drops</em> with altitude up to a point, then flattens or rises. A perfectly straight line is a red flag.</li>
+              </ul>
+              <p><strong>One stronger check:</strong></p>
+              <ul>
+                <li><strong>Reproduce a single point by hand.</strong> Pick one altitude, find the inputs the agent used, and recompute fuel burn yourself (or against a published value / textbook drag-polar example). If you can't recover the agent's number within a few percent, something's off in its model or assumptions.</li>
+              </ul>
+              <p>Then ask the agent directly: <em>"What assumptions, data, or equations would, if wrong, make this plot wrong? Show me the formula and inputs for the point at X altitude."</em> If it can't tell you what would <strong>falsify</strong> the result, you don't yet have evidence — you have a nice-looking draft.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HUMAN -->
+      <section class="sec" id="human">
+        <h2><span class="ix">12</span> When to ask a human</h2>
+        <p class="blurb">This page does not pretend agents solve everything. Knowing when to stop is a skill the course is grading you on.</p>
+        <div class="callout human">
+          <span class="ico">🧑‍🏫</span>
+          <div class="ch">Ask a TA or instructor when…</div>
+          <p>• The agent suggests <b>deleting, overwriting, force-pushing, or exposing private data</b>.<br>
+            • You are stuck in a loop after <b>two or three</b> agent attempts.<br>
+            • The task involves <b>sensitive, proprietary, human-subject, export-controlled, or unpublished</b> data.<br>
+            • You do not understand the <b>risk</b> of a command.<br>
+            • You cannot tell whether the output is <b>scientifically or technically valid</b>.<br>
+            • You need help <b>scoping</b> a research task.</p>
+        </div>
+        <div class="prompt">
+          <div class="ph"><span class="lbl">Help-request template (bring this to a human)</span><button class="copybtn" type="button">Copy</button></div>
+          <pre>1. What I was trying to do:
+2. What I asked the agent:
+3. What the agent suggested:
+4. What I tried:
+5. What happened:
+6. What I am worried about or still do not understand:</pre>
+        </div>
+      </section>
+
+      <!-- NO PASTE -->
+      <section class="sec" id="nopaste">
+        <h2><span class="ix">13</span> What not to paste into AI tools</h2>
+        <div class="callout warn">
+          <span class="ico">🚫</span>
+          <div class="ch">Keep these out of public AI assistants</div>
+          <p>Passwords · API keys · private access tokens · unpublished or embargoed data ·
+            human-subject data · proprietary or export-controlled material · anything you would not
+            put in a public GitHub repo. When in doubt, redact first or ask a human.</p>
+        </div>
+      </section>
+
+      <!-- GLOSSARY -->
+      <section class="sec" id="glossary">
+        <h2><span class="ix">REF</span> Beginner glossary</h2>
+        <p class="blurb">Plain-language definitions for the words that show up most. No shame in keeping this open in a tab.</p>
+        <dl class="glossary">
+          <div class="gterm"><dt>Terminal</dt><dd>A text window where you type commands for the computer to run, one line at a time.</dd></div>
+          <div class="gterm"><dt>Command</dt><dd>A single typed instruction you run in a terminal (e.g. <code>git status</code>).</dd></div>
+          <div class="gterm"><dt>Repository (repo)</dt><dd>A project folder that also stores its full history of changes.</dd></div>
+          <div class="gterm"><dt>Commit</dt><dd>A saved checkpoint of your work, with a short message describing what changed.</dd></div>
+          <div class="gterm"><dt>Diff</dt><dd>A side-by-side view of exactly what changed between two versions.</dd></div>
+          <div class="gterm"><dt>Branch</dt><dd>A separate line of work so you can experiment without touching the main version.</dd></div>
+          <div class="gterm"><dt>Pull request (PR)</dt><dd>A proposed change others can review before it's merged in.</dd></div>
+          <div class="gterm"><dt>Python</dt><dd>A programming language widely used to make analyses reproducible.</dd></div>
+          <div class="gterm"><dt>Notebook</dt><dd>A document (<code>.ipynb</code>) that mixes code, results, and notes in runnable cells.</dd></div>
+          <div class="gterm"><dt>Package</dt><dd>Reusable code someone else wrote that you can install and use.</dd></div>
+          <div class="gterm"><dt>Environment</dt><dd>The set of packages and settings available to your code right now.</dd></div>
+          <div class="gterm"><dt>Agent</dt><dd>An AI assistant that can take actions — read files, run commands, make edits — not just chat.</dd></div>
+          <div class="gterm"><dt>Context</dt><dd>The information you give the agent to work with: your goal, files, data, and constraints.</dd></div>
+          <div class="gterm"><dt>Verification</dt><dd>Checking whether a result is actually correct, with tests designed to catch errors.</dd></div>
+        </dl>
+      </section>
+
+      <!-- QUICK REF (printable) -->
+      <section class="quickref" id="quickref">
+        <div class="qhead">
+          <div>
+            <h2>One-page quick reference</h2>
+            <p class="qsub">The four prompts that get you unstuck most of the time. Print it, keep it in a tab,
+              or screenshot it for clinic.</p>
+          </div>
+          <button class="btn-ghost printbtn" id="printBtn" type="button">🖨 Print this card</button>
+        </div>
+        <div class="qgrid">
+          <div class="qcard">
+            <div class="qt">① Universal "I am stuck"</div>
+            <pre>I am stuck. What I am trying to do: <span class="fill">[GOAL]</span>. What I tried: <span class="fill">[STEPS]</span>. What happened: <span class="fill">[ERROR/RESULT]</span>. I am new to these tools. Explain in plain language, give me exactly one safe next step, and tell me how to check it worked.</pre>
+          </div>
+          <div class="qcard">
+            <div class="qt">② I got an error</div>
+            <pre>Command/action: <span class="fill">[WHAT I TRIED]</span>. Full error: <span class="fill">[PASTE ERROR]</span>. Please: (1) explain it in plain English, (2) most likely cause, (3) one safe next step, (4) how to check it's fixed.</pre>
+          </div>
+          <div class="qcard">
+            <div class="qt">③ Before a risky action</div>
+            <pre>Before I do this, tell me: (1) what files/settings/data may change, (2) whether it is reversible, (3) how to inspect or back up first, (4) the safest smaller version of this action.</pre>
+          </div>
+          <div class="qcard">
+            <div class="qt">④ Ask a human (template)</div>
+            <pre>1. What I was trying to do:
+2. What I asked the agent:
+3. What the agent suggested:
+4. What I tried:
+5. What happened:
+6. What I'm worried about / don't understand:</pre>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /content -->
+  </div><!-- /layout -->
+
+  <footer class="pg">
+    <span>Agent First Aid · AI Coding Agents for Engineering Research</span>
+    <span class="aside">Ask → inspect → one small reversible step → verify → document</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---- Copy buttons: copy the prompt text (placeholders included) ---- */
+  document.querySelectorAll('.prompt').forEach(function(box){
+    var btn = box.querySelector('.copybtn');
+    var pre = box.querySelector('pre');
+    if(!btn || !pre) return;
+    btn.addEventListener('click', function(){
+      var text = pre.innerText;   // innerText preserves line breaks and placeholder text
+      var done = function(){
+        var old = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.textContent = old; btn.classList.remove('done'); }, 1600);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done, function(){ fallback(text); done(); });
+      } else { fallback(text); done(); }
+    });
+  });
+  function fallback(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  /* ---- Print the quick-reference card ---- */
+  function doPrint(){ window.print(); }
+  var pb = document.getElementById('printBtn'); if(pb) pb.addEventListener('click', doPrint);
+  var pt = document.getElementById('printTop'); if(pt) pt.addEventListener('click', doPrint);
+
+  /* ---- Flowchart nodes: flash the target section on arrival ---- */
+  document.querySelectorAll('.fc-node, .fc-end').forEach(function(node){
+    node.addEventListener('click', function(){
+      var id = (node.getAttribute('href')||'').replace('#','');
+      var target = document.getElementById(id);
+      if(target){
+        setTimeout(function(){ target.classList.add('flash');
+          setTimeout(function(){ target.classList.remove('flash'); }, 1600); }, 350);
+      }
+    });
+  });
+
+  /* ---- Flowchart connectors: draw a center trunk + ribs to each node ---- */
+  var stage = document.querySelector('.fc-stage');
+  var svg   = document.getElementById('fcWires');
+  function wires(){
+    if(!stage || !svg) return;
+    var start = stage.querySelector('.fc-start');
+    var end   = stage.querySelector('.fc-end');
+    var nodes = Array.prototype.slice.call(stage.querySelectorAll('.fc-node'));
+    var R = stage.getBoundingClientRect();
+    svg.setAttribute('viewBox', '0 0 ' + R.width + ' ' + R.height);
+    function rel(el){ var b = el.getBoundingClientRect();
+      return { l:b.left-R.left, r:b.right-R.left, t:b.top-R.top, b:b.bottom-R.top,
+               cx:(b.left+b.right)/2 - R.left, cy:(b.top+b.bottom)/2 - R.top }; }
+    var s = rel(start), e = end ? rel(end) : null;
+    var ns = nodes.map(rel);
+    if(!ns.length){ svg.innerHTML=''; return; }
+    // Detect single vs two columns from horizontal spread of node centers.
+    var cxs = ns.map(function(n){ return n.cx; });
+    var spread = Math.max.apply(null,cxs) - Math.min.apply(null,cxs);
+    var multi = spread > 60;
+    var trunkX = multi ? s.cx : (Math.min.apply(null, ns.map(function(n){return n.l;})) - 20);
+    var topY = s.b;
+    var botY = Math.max.apply(null, ns.map(function(n){ return n.cy; }));
+    if(e) botY = Math.max(botY, e.t);
+    var paths = '';
+    // trunk
+    paths += '<path d="M '+trunkX+' '+topY+' L '+trunkX+' '+botY+'"></path>';
+    // ribs
+    ns.forEach(function(n, i){
+      var toX = multi ? (n.cx < trunkX ? n.r : n.l) : n.l;
+      paths += '<path data-rib="'+i+'" d="M '+trunkX+' '+n.cy+' L '+toX+' '+n.cy+'"></path>';
+    });
+    // start -> trunk (if start center differs from trunk)
+    if(Math.abs(s.cx - trunkX) > 1){
+      paths += '<path d="M '+s.cx+' '+s.b+' L '+s.cx+' '+(topY+10)+' L '+trunkX+' '+(topY+10)+'"></path>';
+    }
+    svg.innerHTML = paths;
+  }
+  // light up a node's rib on hover
+  document.querySelectorAll('.fc-node').forEach(function(node, i){
+    node.addEventListener('mouseenter', function(){
+      var p = svg.querySelector('[data-rib="'+i+'"]'); if(p) p.classList.add('lit'); });
+    node.addEventListener('mouseleave', function(){
+      var p = svg.querySelector('[data-rib="'+i+'"]'); if(p) p.classList.remove('lit'); });
+  });
+  var rafid=null;
+  function scheduleWires(){ if(rafid) cancelAnimationFrame(rafid); rafid = requestAnimationFrame(wires); }
+  window.addEventListener('load', wires);
+  window.addEventListener('resize', scheduleWires);
+  wires();
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(wires); }
+
+  /* ---- TOC scroll-spy ---- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var byId = {}; links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+  var spy = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        links.forEach(function(a){ a.classList.remove('active'); });
+        var a = byId[en.target.id]; if(a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -72% 0px', threshold: 0 });
+  document.querySelectorAll('section[id]').forEach(function(s){ spy.observe(s); });
+})();
+</script>
+</body>
+</html>
