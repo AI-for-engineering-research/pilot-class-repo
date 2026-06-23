@@ -341,7 +341,7 @@ footer.pg .aside{color:var(--faint);}
     <div class="eyebrow">Student Support <span class="dot"></span> Agent First Aid</div>
     <h1>Agent&nbsp;First&nbsp;Aid</h1>
     <p class="lead">A no-judgment field guide for when you are stuck. New to terminals, GitHub, Python,
-      coding agents, Markdown, VS&nbsp;Code, WSL, or Codespaces? <b>This page is for you.</b>
+      coding agents, Markdown, VS&nbsp;Code, or WSL? <b>This page is for you.</b>
       It will not teach you everything about computing — it helps you take <b>one safe next step</b>
       with an AI assistant.</p>
     <p class="tagline">When you are stuck, your first job is not to know the answer.
@@ -463,7 +463,7 @@ I am new to some of these tools. Please explain what is probably happening in pl
       <a href="#github">Help with GitHub</a>
       <a href="#python">Help with Python</a>
       <a href="#website">Help with my course website</a>
-      <a href="#scope">Turn a research task into a task</a>
+      <a href="#scope">Make a vague task specific</a>
       <a href="#verify">Verify the agent's work</a>
       <a href="#human">When to ask a human</a>
       <a href="#nopaste">What not to paste</a>
@@ -481,7 +481,7 @@ I am new to some of these tools. Please explain what is probably happening in pl
 
         <div class="concepts">
           <div class="c"><b>"Ask the model"</b> → a chat box (browser or the chat panel in your agent tool).</div>
-          <div class="c"><b>"Edit the file"</b> → the GitHub web editor, VS&nbsp;Code, or Codespaces.</div>
+          <div class="c"><b>"Edit the file"</b> → in <b>VS&nbsp;Code</b> on your computer (or the GitHub web editor for a tiny one-off fix).</div>
           <div class="c"><b>"Run this command"</b> → a <b>terminal</b>, not a chat box.</div>
           <div class="c"><b>"Commit your changes"</b> → the GitHub web UI, or a <code>git</code> command in a terminal.</div>
           <div class="c"><b>"Run the notebook cell"</b> → inside the Jupyter / notebook interface.</div>
@@ -493,7 +493,7 @@ I am new to some of these tools. Please explain what is probably happening in pl
 
 <span class="fill">[PASTE INSTRUCTION]</span>
 
-I do not know where to do it: browser, GitHub, VS Code, terminal, WSL, Codespaces, or notebook. Please tell me where this action belongs, what I should click or type, and what I should expect to see if it works.</pre>
+I do not know where to do it: my computer's terminal, VS Code, the GitHub website, WSL, or a notebook. Please tell me where this action belongs, what I should click or type, and what I should expect to see if it works.</pre>
         </div>
 
         <div class="exchange">
@@ -503,16 +503,13 @@ I do not know where to do it: browser, GitHub, VS Code, terminal, WSL, Codespace
               <p>My TA told me: "clone the repo, create a branch, install dependencies, run the local server, commit your changes, and open a pull request." I genuinely don't know where I'm supposed to do any of this. Is this in the browser? GitHub? The black terminal window? Help.</p>
             </div>
             <div class="bubble agent"><div class="who">Agent</div>
-              <p>Welcome — this is a really common place to feel lost, and you're not doing anything wrong. The short answer: almost all of it happens in <strong>Codespaces</strong> (a full coding environment that runs in your browser), and most of the commands go in the <strong>terminal</strong> (that black window at the bottom).</p>
-              <p>Let's just do the very first step: open your Codespace.</p>
-              <ol>
-                <li>Go to your repo on <strong>GitHub</strong> (the website) in your browser.</li>
-                <li>Click the green <strong><code>&lt; &gt; Code</code></strong> button.</li>
-                <li>Pick the <strong>Codespaces</strong> tab, then click <strong>Create codespace on main</strong>.</li>
-              </ol>
-              <p><strong>What to expect:</strong> a new browser tab opens with something that looks like VS&nbsp;Code. It takes a minute or two to load. When it's ready, you'll see your project files on the left.</p>
-              <p>Here's the nice part: opening a Codespace usually <em>clones the repo for you</em>, so the first item on your TA's list is already handled.</p>
-              <p>Once it's loaded, tell me what you see and we'll create your branch together. You've got this!</p>
+              <p>Here's what's going on, and the good news is it's less scattered than it sounds.</p>
+              <p>Almost everything on your TA's list happens in <strong>one place: the terminal inside VS&nbsp;Code</strong> — that "black window." In VS&nbsp;Code (the app on your laptop), open it with <strong>View → Terminal</strong> (or <code>Ctrl+`</code>). Clone, branch, install, run the server, commit — all typed there. Only the <strong>very last step, the pull request, happens in your browser on GitHub.com.</strong></p>
+              <p>You don't have to do it all now. Just the first safe step: get the code onto your computer by <strong>cloning</strong> (making a local copy of) the repo. In the terminal, run:</p>
+              <pre>git clone &lt;repo-url&gt;</pre>
+              <p>Replace <code>&lt;repo-url&gt;</code> with the link your TA gave you (or the green <strong>Code</strong> button on the GitHub page → copy the HTTPS link).</p>
+              <p><strong>How to check it worked:</strong> you'll see a new folder appear. Type <code>ls</code> (Mac/Linux) or <code>dir</code> (Windows) and confirm the project folder is listed. Then <strong>File → Open Folder</strong> in VS&nbsp;Code to open it.</p>
+              <p>Once you're in, the next steps (a <strong>branch</strong> = your own isolated copy of the work, then installing with <code>uv</code>) follow naturally. Want me to walk through those one at a time?</p>
             </div>
           </div>
         </div>
@@ -557,16 +554,17 @@ Please do four things:
               <p>What do I do?</p>
             </div>
             <div class="bubble agent"><div class="who">Agent</div>
-              <p>That error just means Python can't find <strong>pandas</strong> — a data library your notebook needs — because it isn't installed in your environment yet. Totally normal, and easy to fix.</p>
-              <p>In a new notebook cell, run this and then press Shift+Enter:</p>
-              <pre>%pip install pandas</pre>
-              <p>The <code>%pip</code> (instead of plain <code>pip</code>) makes sure it installs into the <em>same</em> place your notebook is running from, which avoids a common headache.</p>
-              <p><strong>How to check it worked:</strong></p>
-              <ul>
-                <li>You should see a line ending in something like <code>Successfully installed pandas-...</code></li>
-                <li>Now re-run your first cell — the <code>ModuleNotFoundError</code> should be gone.</li>
-              </ul>
-              <p>If it still errors after that, tell me what the new message says and we'll take the next step together.</p>
+              <p>That error just means one of the Python tools your notebook needs — <strong>pandas</strong> (a popular data-analysis library) — isn't installed in your project yet. Easy fix.</p>
+              <p>In the terminal, from your project folder, run this one line:</p>
+              <pre>uv add pandas</pre>
+              <p>This downloads <code>pandas</code>, records it in your project files (so your setup stays reproducible), and installs it into the project's environment — all reversible.</p>
+              <p>One catch: your notebook's "kernel" (the running Python session behind it) won't see the new library until it restarts. So after the command finishes:</p>
+              <ol>
+                <li>In your notebook, go to the menu and click <strong>Kernel → Restart Kernel</strong>.</li>
+                <li>Re-run that first cell.</li>
+              </ol>
+              <p><strong>How to know it worked:</strong> the cell runs with no red <code>ModuleNotFoundError</code>. If you still see it, your notebook may be using the wrong Python — reply here and I'll help you point it at the project's <code>.venv</code>.</p>
+              <p>You've got this!</p>
             </div>
           </div>
         </div>
@@ -633,26 +631,17 @@ Please do four things:
           <div class="xh"><span class="lab">Real exchange</span><span class="real">generated live with a coding agent</span></div>
           <div class="xbody">
             <div class="bubble student"><div class="who">Student</div>
-              <p>Another agent told me to run <code>git checkout -- .</code> and also <code>pip freeze &gt; requirements.txt</code> to "fix my setup." Before I run anything: what will these actually change, and can I undo it if it goes wrong?</p>
+              <p>Another agent told me to run <code>git checkout -- .</code> and also <code>uv sync</code> to "fix my setup." Before I run anything: what will these actually change, and can I undo it if it goes wrong?</p>
             </div>
             <div class="bubble agent"><div class="who">Agent</div>
-              <p><code>git checkout -- .</code> and <code>pip freeze &gt; requirements.txt</code> do two very different things, and one of them is the risky one.</p>
-              <p><strong><code>git checkout -- .</code></strong></p>
-              <ul>
-                <li><em>What it changes:</em> throws away all uncommitted edits to tracked files in your working directory, reverting them to the last commit.</li>
-                <li><em>Reversible?</em> <strong>No.</strong> Discarded changes that were never committed are gone for good. (Untracked/new files aren't touched, but anything you edited-but-didn't-commit is.)</li>
-                <li><em>Inspect first:</em>
-                  <pre>git status        # see what would be lost
-git stash         # safely tuck changes aside instead of deleting</pre>
-                  <code>git stash</code> is the smaller, reversible version — you can bring them back with <code>git stash pop</code>.</li>
-              </ul>
-              <p><strong><code>pip freeze &gt; requirements.txt</code></strong></p>
-              <ul>
-                <li><em>What it changes:</em> overwrites <code>requirements.txt</code> with the exact package versions in your current environment.</li>
-                <li><em>Reversible?</em> Yes, if the file is tracked in git — <code>git checkout requirements.txt</code> restores it. Back it up first to be safe:
-                  <pre>cp requirements.txt requirements.backup.txt</pre></li>
-              </ul>
-              <p>So: the pip command is low-stakes. The <code>git checkout</code> is the one to pause on. Run <code>git status</code> first, and if there's any work you care about, <code>git stash</code> instead of checkout.</p>
+              <p>Here's what each of these does before you run anything.</p>
+              <p><strong><code>git checkout -- .</code></strong> — this throws away <em>all</em> your uncommitted edits to tracked files and resets them to the last commit. <strong>This is NOT reversible.</strong> Anything you changed but didn't commit is gone for good — git keeps no backup of it. Before running it, see exactly what you'd lose:</p>
+              <pre>git status        # lists changed files
+git diff          # shows the actual edits</pre>
+              <p>Safer smaller version: revert one file at a time (<code>git checkout -- path/to/file.py</code>) so you only discard what you mean to. Or stash instead — <code>git stash</code> tucks your changes away <em>recoverably</em> (<code>git stash pop</code> brings them back).</p>
+              <p><strong><code>uv sync</code></strong> — this only touches your <code>.venv</code> folder (your project's private set of installed packages), making it match <code>pyproject.toml</code> + <code>uv.lock</code>. It may <em>remove</em> packages you installed manually (e.g. via <code>uv pip install</code>), but it changes <strong>no source files</strong>. It's recoverable: the <code>.venv</code> rebuilds from the lockfile, and anything it removes you can re-add with <code>uv add &lt;pkg&gt;</code>. To preview what you have first:</p>
+              <pre>uv pip list       # see installed packages</pre>
+              <p>So: <code>uv sync</code> is safe and reversible. <code>git checkout -- .</code> is the one to be careful with — inspect with <code>git diff</code> (or <code>git stash</code>) before committing to it.</p>
             </div>
           </div>
         </div>
@@ -756,9 +745,21 @@ Please tell me the safest way to make a small change, inspect the diff, and comm
           <div class="c">A Python file usually ends in <b>.py</b>.</div>
           <div class="c">A notebook usually ends in <b>.ipynb</b>.</div>
           <div class="c">A <b>package</b> is reusable code someone else wrote.</div>
-          <div class="c">An <b>environment</b> controls which packages are available.</div>
+          <div class="c">An <b>environment</b> is your project's own private set of packages.</div>
+          <div class="c">We manage environments and packages with <b>uv</b> — fast, and reproducible for everyone.</div>
           <div class="c">A plot or table should be <b>reproducible</b> from data and code.</div>
         </div>
+
+        <div class="callout tip">
+          <span class="ico">📦</span>
+          <div class="ch">The uv commands you'll actually use</div>
+          <p><code>uv add pandas</code> — add a package (records it in <code>pyproject.toml</code> + <code>uv.lock</code> so the setup is reproducible).<br>
+            <code>uv run jupyter lab</code> — run something <em>inside</em> the project's environment.<br>
+            <code>uv sync</code> — rebuild your environment to match the project's locked dependencies.<br>
+            <code>uv pip list</code> — see what's installed.<br>
+            Reach for <code>uv add</code> instead of a bare <code>pip install</code> — it keeps your environment reproducible for teammates and for future-you.</p>
+        </div>
+
         <div class="prompt">
           <div class="ph"><span class="lbl">Understand-this-code prompt</span><button class="copybtn" type="button">Copy</button></div>
           <pre>I am new to Python. I need to understand this file/notebook/script enough to use it safely.
@@ -942,7 +943,8 @@ Please help me design a verification plan. I want checks that could catch plausi
           <div class="gterm"><dt>Python</dt><dd>A programming language widely used to make analyses reproducible.</dd></div>
           <div class="gterm"><dt>Notebook</dt><dd>A document (<code>.ipynb</code>) that mixes code, results, and notes in runnable cells.</dd></div>
           <div class="gterm"><dt>Package</dt><dd>Reusable code someone else wrote that you can install and use.</dd></div>
-          <div class="gterm"><dt>Environment</dt><dd>The set of packages and settings available to your code right now.</dd></div>
+          <div class="gterm"><dt>Environment</dt><dd>Your project's own private set of installed packages and settings (it lives in a <code>.venv</code> folder).</dd></div>
+          <div class="gterm"><dt>uv</dt><dd>The tool this course uses to manage Python environments and packages — e.g. <code>uv add pandas</code> to install, <code>uv run …</code> to execute. Fast, and keeps everyone's setup reproducible.</dd></div>
           <div class="gterm"><dt>Agent</dt><dd>An AI assistant that can take actions — read files, run commands, make edits — not just chat.</dd></div>
           <div class="gterm"><dt>Context</dt><dd>The information you give the agent to work with: your goal, files, data, and constraints.</dd></div>
           <div class="gterm"><dt>Verification</dt><dd>Checking whether a result is actually correct, with tests designed to catch errors.</dd></div>
