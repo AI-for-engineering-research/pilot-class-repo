@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
-  <title id="title">Still from Mina Cezairli's airspace structure demo</title>
-  <desc id="desc">A dark minimal interactive-demo style airspace map with controls, sectors, routes, trajectories, narrative hotspots, and a support suggestion.</desc>
+  <title id="title">Understanding airspace (cognitive) structure</title>
+  <desc id="desc">A dark minimal interactive-demo style airspace map for Understanding airspace (cognitive) structure, with controls, sectors, routes, trajectories, narrative hotspots, and a support suggestion.</desc>
   <defs>
     <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#050505"/>
@@ -121,6 +121,7 @@
 
   <g font-family="IBM Plex Mono, SFMono-Regular, Consolas, monospace" letter-spacing="2" text-transform="uppercase">
     <text x="82" y="610" fill="#737373" font-size="15">interactive demo still</text>
-    <text x="916" y="610" fill="#00e5ff" font-size="15">airspace structure</text>
+    <text x="820" y="600" fill="#00e5ff" font-size="14">understanding airspace</text>
+    <text x="820" y="620" fill="#00e5ff" font-size="14">(cognitive) structure</text>
   </g>
 </svg>
