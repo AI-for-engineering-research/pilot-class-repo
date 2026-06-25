@@ -30,7 +30,7 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}          /* one screen, no scrolling */
+html,body{height:100%;overflow-x:hidden;overflow-y:auto}   /* fills screen, scrolls when content overflows */
 body{
   font-family:var(--body);
   background:var(--bg-0);
@@ -70,7 +70,7 @@ body{
 
 /* ---------- Shell ---------- */
 .wrap{
-  position:relative;height:100vh;height:100svh;
+  position:relative;min-height:100vh;min-height:100svh;
   display:flex;flex-direction:column;
   padding:var(--pad);gap:clamp(14px,2.3vh,28px);
 }
@@ -101,17 +101,17 @@ h1{
 
 /* ---------- Tools & links: low-key corner card → modal ---------- */
 .tools{
-  flex:0 0 auto;display:flex;align-items:center;gap:11px;cursor:pointer;
+  flex:0 0 auto;display:flex;align-items:center;gap:14px;cursor:pointer;
   font-family:var(--body);text-align:left;
-  background:var(--card);border:1px solid var(--card-bd);border-radius:13px;
-  padding:9px 13px;color:var(--ink);transition:.25s;backdrop-filter:blur(6px);
+  background:var(--card);border:1px solid var(--card-bd);border-radius:15px;
+  padding:13px 18px;color:var(--ink);transition:.25s;backdrop-filter:blur(6px);
 }
 .tools:hover{border-color:rgba(95,210,194,.45);background:rgba(255,255,255,.05);}
-.tools .ic{display:grid;grid-template-columns:1fr 1fr;gap:3px;flex:0 0 auto;}
-.tools .ic i{width:6px;height:6px;border-radius:2px;background:var(--teal);opacity:.85;}
+.tools .ic{display:grid;grid-template-columns:1fr 1fr;gap:4px;flex:0 0 auto;}
+.tools .ic i{width:8px;height:8px;border-radius:2px;background:var(--teal);opacity:.85;}
 .tools .tx{display:flex;flex-direction:column;line-height:1.2;}
-.tools .tx .a{font-size:13px;font-weight:600;}
-.tools .tx .b{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em;margin-top:2px;}
+.tools .tx .a{font-size:15px;font-weight:600;}
+.tools .tx .b{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em;margin-top:3px;}
 .corner{flex:0 0 auto;display:flex;flex-direction:column;gap:10px;align-items:stretch;}
 .tools.classesbtn:hover{border-color:rgba(232,176,75,.45);}
 .tools.classesbtn .ic i{background:var(--amber);}
@@ -133,7 +133,7 @@ main{flex:0 0 auto;display:flex;flex-direction:column;gap:clamp(14px,2.2vh,26px)
 }
 a.pcard:hover{transform:translateY(-5px);border-color:var(--edge);background:rgba(255,255,255,.05);
   box-shadow:0 16px 40px rgba(0,0,0,.35);}
-.thumb{position:relative;height:clamp(72px,12.5vh,120px);background:rgba(0,0,0,.28);
+.thumb{position:relative;height:clamp(140px,22vh,220px);background:rgba(0,0,0,.28);
   border-bottom:1px solid var(--card-bd);display:grid;place-items:center;overflow:hidden;}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .thumb .ph{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:0 14px;
@@ -150,30 +150,8 @@ a.pcard:hover{transform:translateY(-5px);border-color:var(--edge);background:rgb
 .pbody .pstudent{font-size:11.5px;color:var(--muted);font-style:italic;line-height:1.3;margin-top:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* ===== SECONDARY: classes ===== */
-.classes-sheet{--accent:var(--amber);--edge:rgba(232,176,75,.42);}
-.classes-sheet .sessions{flex-direction:column;}
-.classes-sheet .scard{max-width:none;width:100%;}
-.sessions{list-style:none;display:flex;flex-wrap:wrap;gap:10px;}
-.scard{
-  position:relative;display:flex;align-items:center;gap:12px;
-  border:1px solid var(--card-bd);border-radius:13px;padding:11px 13px;
-  background:rgba(255,255,255,.025);min-width:248px;max-width:360px;
-  transition:border-color .3s ease, background .3s ease, transform .3s ease;
-}
-.scard:hover{border-color:var(--edge);background:rgba(255,255,255,.06);transform:translateY(-3px);}
-.scard .stretch{position:absolute;inset:0;z-index:1;border-radius:13px;}      /* full-card link → presentation */
-.scard .tag{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--accent);
-  border:1px solid var(--card-bd);border-radius:7px;padding:4px 8px;min-width:40px;text-align:center;}
-.scard .smeta{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;}
-.scard .sname{font-size:14px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.scard .sdesc{font-size:11.5px;color:var(--muted);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.scard .snotes{position:relative;z-index:2;flex:0 0 auto;font-family:var(--mono);font-size:11px;
-  letter-spacing:.04em;color:var(--faint);text-decoration:none;border:1px solid transparent;
-  border-radius:7px;padding:4px 8px;transition:.25s;}
-.scard .snotes:hover{color:var(--accent);border-color:var(--edge);background:rgba(255,255,255,.04);}
-.scard .arr{flex:0 0 auto;font-family:var(--mono);color:var(--faint);font-size:16px;transition:transform .3s ease,color .3s ease;}
-.scard:hover .arr{transform:translateX(4px);color:var(--accent);}
+/* ===== Classes — styling lives after the Modal section below (source order matters
+        so .classes-sheet overrides win over the shared .sheet base) ===== */
 
 /* ---------- Footer ---------- */
 footer{flex:0 0 auto;margin-top:auto;
@@ -209,6 +187,36 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
 .row .rdesc{font-size:11.5px;color:var(--muted);line-height:1.3;}
 .row .arr{flex:0 0 auto;font-family:var(--mono);color:var(--faint);font-size:16px;transition:transform .25s ease,color .25s ease;}
 .row:hover .arr{transform:translateX(4px);color:var(--accent);}
+
+/* ---------- Classes modal: roomy two-column grid ---------- */
+.classes-sheet{--accent:var(--amber);--edge:rgba(232,176,75,.42);
+  width:min(95vw,1040px);max-height:88vh;padding:clamp(22px,3.2vw,42px);}
+.classes-sheet .shead{margin-bottom:clamp(16px,2.6vh,28px);}
+.classes-sheet .shead h3{font-size:clamp(24px,3vw,34px);}
+.classes-sheet .shead .sub{font-size:12px;}
+
+.sessions{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(11px,1.3vw,16px);}
+.scard{
+  position:relative;display:flex;align-items:center;gap:13px;height:100%;
+  border:1px solid var(--card-bd);border-radius:15px;padding:15px 17px;
+  background:rgba(255,255,255,.025);
+  transition:border-color .3s ease, background .3s ease, transform .3s ease;
+}
+.scard:hover{border-color:var(--edge);background:rgba(255,255,255,.06);transform:translateY(-3px);}
+.scard .stretch{position:absolute;inset:0;z-index:1;border-radius:15px;}   /* full-card link → presentation */
+.scard .tag{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--accent);
+  border:1px solid var(--card-bd);border-radius:7px;padding:5px 9px;min-width:42px;text-align:center;}
+.scard .smeta{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 auto;}
+.scard .sname{font-size:15.5px;font-weight:600;line-height:1.3;}
+.scard .sdesc{font-size:12.5px;color:var(--muted);line-height:1.45;}
+.scard .snotes{position:relative;z-index:2;flex:0 0 auto;font-family:var(--mono);font-size:11px;
+  letter-spacing:.04em;color:var(--faint);text-decoration:none;border:1px solid transparent;
+  border-radius:7px;padding:5px 9px;transition:.25s;}
+.scard .snotes:hover{color:var(--accent);border-color:var(--edge);background:rgba(255,255,255,.04);}
+.scard .arr{flex:0 0 auto;font-family:var(--mono);color:var(--faint);font-size:17px;
+  transition:transform .3s ease,color .3s ease;}
+.scard:hover .arr{transform:translateX(4px);color:var(--accent);}
+@media (max-width:640px){ .sessions{grid-template-columns:1fr;} }
 
 /* ---------- Entrance ---------- */
 [data-anim]{opacity:0;transform:translateY(16px);
@@ -287,9 +295,9 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
           <div class="thumb"><img src="thumbs/louis_thumb.png" alt="Synthetic contrail imagery for model & forecast evaluation"></div>
           <div class="pbody"><span class="ptag">02</span><span class="pmeta"><span class="pname">Synthetic contrail imagery for model & forecast evaluation</span><span class="pstudent">Louis Robion</span></span></div>
         </a>
-        <a class="pcard" href="https://ai-for-engineering-research.github.io/aditeya/projects/designing-aircraft-for-contrail-impacts/about.html" target="_blank" rel="noopener">
-          <div class="thumb"><img src="thumbs/aditeya-thumb.png" alt="Aircraft Design for Contrail Avoidance"></div>
-          <div class="pbody"><span class="ptag">03</span><span class="pmeta"><span class="pname">Aircraft Design for Contrail Avoidance</span><span class="pstudent">Aditeya Shukla</span></span></div>
+        <a class="pcard" href="https://ai-for-engineering-research.github.io/aditeya/projects/tasopt-verification-and-validation/about.html" target="_blank" rel="noopener">
+          <div class="thumb"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUQEXzzN6Qdk4l8xrDqAMoaV2NXqscVv0EExSCmcxrrXXlPZqLq18uF2g&s=10" alt="Boeing 737-800 geometry from airport planning documentation"></div>
+          <div class="pbody"><span class="ptag">03</span><span class="pmeta"><span class="pname">TASOPT Verification and Validation</span><span class="pstudent">Aditeya Shukla</span></span></div>
         </a>
         <a class="pcard" href="https://ai-for-engineering-research.github.io/tara/" target="_blank" rel="noopener">
           <div class="thumb"><img src="thumbs/tara_thumb.jpg" alt="Cost benefit analysis of low aromatic fuels"></div>
@@ -306,7 +314,7 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
         <article class="pcard">
           <div class="thumb"><span class="ph">Thumbnail<small>drop a screenshot of the package</small></span></div>
           <div class="pbody"><span class="ptag">07</span><span class="pmeta"><span class="pname" title="PowerCycles.jl — robust and fast propulsion system design and optimization">PowerCycles.jl — robust and fast propulsion system design and optimization</span><span class="pstudent">Prashanth Prakash</span></span></div>
-        </article>
+        </a>
         <a class="pcard" href="https://ai-for-engineering-research.github.io/ian/" target="_blank" rel="noopener">
           <div class="thumb"><img src="thumbs/ian-thumb.png" alt="Schematic models of clouds and contrails"></div>
           <div class="pbody"><span class="ptag">08</span><span class="pmeta"><span class="pname" title="Schematic models of clouds and contrails">Schematic models of clouds and contrails</span><span class="pstudent">Ian Ross</span></span></div>
@@ -366,6 +374,18 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
 
       <li>
         <div class="scard">
+          <a class="stretch" href="agent-first-aid/index.html" aria-label="Open the Agent First Aid student support page"></a>
+          <span class="tag">AID</span>
+          <span class="smeta">
+            <span class="sname">Agent First Aid</span>
+            <span class="sdesc">Stuck? Take one safe next step with an AI assistant — triage flowchart, copy-paste prompts &amp; verification</span>
+          </span>
+          <span class="arr">→</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="scard">
           <a class="stretch" href="session-1/lesson1.html" aria-label="Open Session 01 presentation"></a>
           <span class="tag">01</span>
           <span class="smeta">
@@ -377,7 +397,59 @@ footer .aside{font-size:.78em;color:var(--faint);letter-spacing:.02em;}
         </div>
       </li>
 
-      <!-- Add the next session by copying one <li> block and pointing it at session-2/… -->
+      <li>
+        <div class="scard">
+          <a class="stretch" href="session-2/Attention%20Mechanism/Attention%20Mechanism.html" aria-label="Open Session 02 interactive"></a>
+          <span class="tag">02</span>
+          <span class="smeta">
+            <span class="sname">The Attention Mechanism</span>
+            <span class="sdesc">Score, focus, mix — on GPT-2's real heads</span>
+          </span>
+          <a class="snotes" href="session-2/Attention%20Mechanism/README.md">notes</a>
+          <span class="arr">→</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="scard">
+          <a class="stretch" href="session-3/How%20Transformers%20Learn/How%20Transformers%20Learn.html" aria-label="Open Session 03 presentation"></a>
+          <span class="tag">03</span>
+          <span class="smeta">
+            <span class="sname">How Transformers Learn</span>
+            <span class="sdesc">A live micro-transformer trains in your browser</span>
+          </span>
+          <a class="snotes" href="session-3/How%20Transformers%20Learn/README.md">notes</a>
+          <span class="arr">→</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="scard">
+          <a class="stretch" href="session-4/Testing%20What%20You%20Can't%20Predict/Testing%20What%20You%20Can't%20Predict.html" aria-label="Open Session 04 presentation"></a>
+          <span class="tag">04</span>
+          <span class="smeta">
+            <span class="sname">Testing What You Can't Predict</span>
+            <span class="sdesc">Property-based and metamorphic testing — how to test code whose answers you can't predict</span>
+          </span>
+          <a class="snotes" href="session-4/Testing%20What%20You%20Can't%20Predict/README.md">notes</a>
+          <span class="arr">→</span>
+        </div>
+      </li>
+
+      <li>
+        <div class="scard">
+          <a class="stretch" href="session-5/Agentic%20Scientific%20Reproduction%20Demo/Agentic%20Scientific%20Reproduction%20Demo.html" aria-label="Open Session 05 interactive demo"></a>
+          <span class="tag">05</span>
+          <span class="smeta">
+            <span class="sname">Agentic Scientific Reproduction Demo</span>
+            <span class="sdesc">From paper PDF to tested κ-Köhler figure, digitized data, and overlay validation</span>
+          </span>
+          <a class="snotes" href="session-5/Agentic%20Scientific%20Reproduction%20Demo/README.md">notes</a>
+          <span class="arr">→</span>
+        </div>
+      </li>
+
+      <!-- Add the next session by copying one <li> block and pointing it at session-6/… -->
 
     </ul>
   </div>

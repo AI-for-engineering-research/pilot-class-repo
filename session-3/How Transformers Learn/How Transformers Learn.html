@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Transformers Learn — Session 3</title>
+<link rel="stylesheet" href="lib/katex.min.css">
+
+<!-- Fonts load from Google Fonts when online; falls back gracefully offline. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-0:#080b12;
+  --ink:#eef1f7;
+  --muted:#9aa6bb;
+  --faint:#586173;
+  --line:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.035);
+  --card-bd:rgba(255,255,255,.09);
+  --panel:#0a0e16;
+  --amber:#e8b04b;
+  --teal:#5fd2c2;
+  --indigo:#8ea0e8;
+  --rose:#d98aa8;
+  --good:#62d98a;
+  --bad:#e06a6a;
+  --display:"Bricolage Grotesque","Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--body);background:var(--bg-0);color:var(--ink);overflow:hidden;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+
+/* ---------- Living background (same family as session 1) ---------- */
+.bg{position:fixed;inset:-28%;z-index:-3;
+  background:
+    radial-gradient(46% 58% at 22% 26%, rgba(72,92,168,.38), transparent 70%),
+    radial-gradient(52% 54% at 80% 74%, rgba(26,118,118,.30), transparent 72%),
+    radial-gradient(40% 48% at 62% 14%, rgba(122,74,140,.20), transparent 70%),
+    radial-gradient(60% 60% at 50% 110%, rgba(40,52,92,.38), transparent 70%),
+    var(--bg-0);
+  animation:drift 26s ease-in-out infinite alternate;will-change:transform;}
+@keyframes drift{
+  0%  {transform:translate3d(-5%,-3%,0) scale(1.10);}
+  50% {transform:translate3d(4%,4%,0)   scale(1.16);}
+  100%{transform:translate3d(-2%,3%,0)  scale(1.10);}
+}
+.grain{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.vignette{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,.45) 100%);}
+
+/* ---------- Deck ---------- */
+.deck{position:fixed;inset:0;}
+.stage{position:absolute;inset:0;display:flex;flex-direction:column;
+  padding:clamp(18px,3vh,40px) clamp(22px,3.2vw,56px) clamp(44px,6vh,64px);
+  opacity:0;visibility:hidden;transform:scale(.992);
+  transition:opacity .5s ease, transform .5s cubic-bezier(.2,.7,.2,1), visibility 0s linear .5s;}
+.stage.active{opacity:1;visibility:visible;transform:none;
+  transition:opacity .5s ease, transform .5s cubic-bezier(.2,.7,.2,1);}
+[data-anim]{opacity:0;transform:translateY(16px);transition:opacity .55s ease, transform .65s cubic-bezier(.2,.75,.2,1);}
+.stage.active [data-anim]{opacity:1;transform:none;}
+.stage.active [data-anim]:nth-of-type(1){transition-delay:.05s}
+.stage.active [data-anim]:nth-of-type(2){transition-delay:.13s}
+.stage.active [data-anim]:nth-of-type(3){transition-delay:.21s}
+.stage.active [data-anim]:nth-of-type(4){transition-delay:.29s}
+
+/* ---------- Stage header ---------- */
+.eyebrow{font-family:var(--mono);font-size:clamp(10px,1vw,13px);letter-spacing:.26em;
+  text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:13px;margin-bottom:clamp(6px,1vh,12px);}
+.eyebrow::before{content:"";width:40px;height:1px;background:var(--amber);opacity:.7;}
+.shead h2{font-family:var(--display);font-weight:750;line-height:1.04;letter-spacing:-.015em;
+  font-size:clamp(22px,3.4vh,40px);}
+.point{color:var(--ink);background:rgba(142,160,232,.08);border-left:3px solid var(--indigo);
+  border-radius:0 9px 9px 0;padding:8px 14px;margin:clamp(8px,1.4vh,14px) 0 0;
+  font-size:clamp(13px,1.7vh,16.5px);line-height:1.5;max-width:120ch;}
+.point b{color:#fff}
+.point .pill{font-family:var(--mono);font-size:.88em;background:rgba(0,0,0,.35);
+  border:1px solid var(--card-bd);border-radius:6px;padding:1px 7px;white-space:nowrap;}
+
+/* ---------- Stage body: visuals + student-notes rail ---------- */
+.sbody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) clamp(280px,24vw,380px);
+  gap:clamp(14px,1.8vw,28px);margin-top:clamp(10px,1.8vh,20px);align-items:stretch;}
+.viz{min-width:0;min-height:0;display:flex;flex-direction:column;}
+
+.notes{background:var(--card);border:1px solid var(--card-bd);border-radius:16px;
+  padding:clamp(13px,1.8vh,20px) clamp(14px,1.4vw,20px);overflow:auto;backdrop-filter:blur(6px);}
+.notes .nhead{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:10px;display:flex;align-items:center;gap:9px;}
+.notes .nhead::after{content:"";flex:1;height:1px;background:var(--card-bd);}
+.notes ol{list-style:none;counter-reset:n;display:flex;flex-direction:column;gap:clamp(8px,1.3vh,13px);}
+.notes ol li{counter-increment:n;position:relative;padding-left:27px;
+  font-size:clamp(12.5px,1.65vh,15.5px);line-height:1.5;color:var(--muted);}
+.notes ol li::before{content:counter(n);position:absolute;left:0;top:.1em;width:19px;height:19px;
+  display:grid;place-items:center;border:1px solid rgba(232,176,75,.5);border-radius:6px;
+  font-family:var(--mono);font-size:10.5px;color:var(--amber);}
+.notes b{color:var(--ink);font-weight:600;}
+.notes .obs{color:var(--teal);}
+.notes .aside{margin-top:12px;padding-top:11px;border-top:1px dashed var(--card-bd);
+  font-size:clamp(11.5px,1.5vh,13.5px);line-height:1.5;color:var(--faint);}
+.notes .aside b{color:var(--muted);}
+
+/* ---------- Panels & widgets ---------- */
+.subhead{font-size:clamp(11px,1.4vh,13px);color:var(--muted);margin:0 0 5px;}
+.subhead b{color:#cfe0ee}
+canvas{display:block;width:100%;border-radius:12px;}
+.panelframe{background:var(--panel);border:1px solid var(--card-bd);border-radius:12px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.4vw,20px);min-height:0;}
+.mono{font-family:var(--mono)}
+.note{color:var(--muted);font-size:clamp(11.5px,1.5vh,13.5px);line-height:1.5;}
+
+.corpusbox{font-family:var(--mono);font-size:clamp(11px,1.55vh,13px);line-height:2;color:#a8b4c8;
+  background:var(--panel);border:1px solid var(--card-bd);border-radius:12px;padding:10px 13px;
+  height:clamp(150px,26vh,300px);overflow:auto;}
+.corpusbox span.s{padding:1px 4px;}
+.vrow{display:flex;align-items:center;gap:13px;margin:clamp(7px,1.4vh,14px) 0;}
+.vlab{font-family:var(--mono);font-size:11px;color:var(--muted);width:88px;text-align:right;flex:0 0 auto;}
+.tk.static{cursor:default;}
+.kv{display:flex;gap:16px;flex-wrap:wrap;font-size:clamp(10.5px,1.4vh,12.5px);color:var(--muted);margin-top:7px;}
+.kv b{color:#fff;font-family:var(--mono);font-weight:500;}
+
+.tokens{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0 10px;}
+.tk{padding:6px 11px;border-radius:9px;border:1px solid var(--card-bd);background:var(--panel);
+  cursor:pointer;font-size:clamp(12px,1.7vh,15px);font-family:var(--mono);color:var(--ink);}
+.tk.q{border-color:var(--teal);box-shadow:0 0 0 2px rgba(95,210,194,.28) inset;}
+
+.barwrap{padding-bottom:20px;}
+.bars{display:flex;align-items:flex-end;gap:4px;height:clamp(90px,15vh,160px);padding:8px 8px 2px;
+  border-radius:12px;background:var(--panel);border:1px solid var(--card-bd);}
+.bars .b{flex:1;border-radius:3px 3px 0 0;min-height:1px;position:relative;}
+.bars .b .bl{position:absolute;bottom:-18px;left:-6px;right:-6px;text-align:center;
+  font-size:9.5px;color:var(--muted);font-family:var(--mono);overflow:hidden;}
+
+.eqbox{background:var(--panel);border:1px solid var(--card-bd);border-radius:10px;
+  padding:11px 13px;overflow-x:auto;text-align:center;font-size:clamp(12px,1.7vh,15px);}
+
+.controls{display:flex;flex-wrap:wrap;gap:13px;align-items:flex-end;margin:2px 0 clamp(8px,1.4vh,14px);}
+.ctl{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);}
+.ctl .v{font-family:var(--mono);color:var(--ink);font-size:12.5px;}
+input[type=range]{width:130px;accent-color:var(--teal);}
+.switch{display:inline-flex;border:1px solid var(--card-bd);border-radius:9px;overflow:hidden;}
+.switch button{background:var(--panel);color:var(--muted);border:0;padding:7px 12px;cursor:pointer;font-size:12.5px;font-family:var(--body);}
+.switch button.on{background:rgba(142,160,232,.22);color:#cdd7ff;}
+.btn{border:1px solid var(--card-bd);background:var(--panel);color:var(--ink);border-radius:9px;
+  padding:7px 12px;cursor:pointer;font-size:12.5px;font-family:var(--body);}
+.btn:hover{border-color:var(--teal);}
+.btn.play{border-color:rgba(98,217,138,.55);color:var(--good);font-weight:700;min-width:88px;}
+.btn.play.on{background:rgba(98,217,138,.13);}
+select.btn{padding:7px 8px;max-width:340px;}
+
+.banner-green{display:none;background:rgba(98,217,138,.09);border:1px solid rgba(98,217,138,.45);
+  color:#a9eec1;border-radius:9px;padding:7px 12px;font-size:clamp(11.5px,1.55vh,13.5px);margin:0 0 10px;}
+.banner-green b{color:#d6f7e0}
+
+.pstrip{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-start;}
+.pcell{background:var(--panel);border:1px solid var(--card-bd);border-radius:8px;padding:6px 7px 4px;text-align:center;}
+.pcell canvas{image-rendering:pixelated;border-radius:3px;cursor:crosshair;margin:0 auto;width:auto;}
+.pcell .pl{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;}
+.pcell.watched{border-color:var(--rose);}
+
+.wbox{background:rgba(217,138,168,.07);border:1px solid rgba(217,138,168,.45);border-radius:12px;
+  padding:12px 14px;}
+.wbox .big{font-family:var(--mono);font-size:clamp(13px,1.8vh,16px);}
+.statline{font-family:var(--mono);font-size:clamp(10.5px,1.45vh,12.5px);color:#c3cdde;margin-top:6px;line-height:1.5;}
+
+details.math{background:var(--panel);border:1px solid var(--card-bd);border-radius:10px;
+  padding:9px 13px;margin-top:10px;}
+details.math summary{cursor:pointer;color:var(--muted);font-size:clamp(11.5px,1.55vh,13.5px);font-weight:600;}
+details.math .body{margin-top:9px;}
+
+.gen{display:flex;gap:9px;flex-wrap:wrap;align-items:center;}
+.genout{font-family:var(--mono);font-size:clamp(15px,2.4vh,22px);margin:clamp(10px,2vh,18px) 0;}
+.genout .new{color:var(--amber);font-weight:700;}
+
+/* ---------- Big-picture pipeline (screen 01) ---------- */
+.pipe{display:flex;align-items:center;justify-content:center;gap:clamp(7px,.9vw,15px);flex-wrap:wrap;
+  margin-top:clamp(10px,2vh,20px);}
+.pitem{display:flex;flex-direction:column;align-items:center;gap:7px;}
+.plab{font-family:var(--mono);font-size:clamp(9.5px,1.25vh,11.5px);color:var(--muted);letter-spacing:.04em;text-align:center;}
+.ptok{font-family:var(--mono);font-size:clamp(17px,2.6vh,24px);padding:10px 16px;border:1px solid var(--card-bd);
+  border-radius:11px;background:var(--panel);}
+canvas.pvec{width:clamp(22px,2.6vh,30px);height:clamp(140px,21vh,212px);border:1px solid var(--card-bd);}
+canvas.pmat{width:clamp(68px,10vh,104px);height:clamp(68px,10vh,104px);border:1px solid var(--card-bd);}
+.parr{font-family:var(--mono);color:var(--faint);font-size:clamp(15px,2.4vh,22px);padding:0 2px;}
+
+/* ---------- Anatomy of the matrices (screen 02) ---------- */
+.anat{display:flex;align-items:stretch;justify-content:center;gap:clamp(8px,1vw,16px);flex-wrap:wrap;
+  margin-top:clamp(8px,1.6vh,16px);}
+.agroup{border:1px dashed var(--card-bd);border-radius:14px;padding:clamp(9px,1.5vh,14px) clamp(10px,1.2vw,16px);
+  display:flex;flex-direction:column;gap:9px;align-items:center;background:rgba(255,255,255,.015);}
+.aghead{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+.atiles{display:flex;gap:clamp(10px,1.2vw,18px);align-items:flex-start;flex:1;}
+.atile{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;justify-content:flex-start;}
+.atile canvas{image-rendering:pixelated;border-radius:3px;width:auto;}
+.atile .tname{font-size:clamp(12px,1.8vh,16px);}
+.atile .tlab{font-size:clamp(10.5px,1.4vh,12.5px);color:var(--muted);max-width:15ch;line-height:1.35;}
+.atile .tdim{font-family:var(--mono);font-size:9.5px;color:var(--faint);}
+.aarr{align-self:center;color:var(--faint);font-size:clamp(16px,2.4vh,22px);font-family:var(--mono);}
+
+/* ---------- Prediction playground (screens 03 & 06) ---------- */
+.pin{font-family:var(--mono);font-size:clamp(15px,2.2vh,20px);background:var(--panel);
+  border:1px solid var(--card-bd);border-radius:10px;padding:10px 14px;color:var(--ink);
+  flex:1 1 280px;max-width:600px;}
+.pin:focus{outline:none;border-color:var(--teal);}
+.pstatus{min-height:1.4em;}
+
+.legendline{display:flex;gap:15px;flex-wrap:wrap;font-size:clamp(11.5px,1.6vh,14px);color:var(--muted);}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+
+/* ---------- Title stage ---------- */
+#st-title{justify-content:center;padding-bottom:10vh;}
+#st-title h1{font-family:var(--display);font-weight:800;line-height:1.02;letter-spacing:-.02em;
+  font-size:clamp(40px,8.6vh,96px);max-width:14ch;
+  background:linear-gradient(95deg,var(--ink) 0%,var(--ink) 42%,var(--amber) 70%,var(--teal) 95%);
+  background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:sheen 7s ease-in-out 1s infinite alternate;}
+@keyframes sheen{from{background-position:0% 50%}to{background-position:100% 50%}}
+#st-title .sub{font-size:clamp(15px,2.2vh,21px);line-height:1.55;color:var(--muted);max-width:72ch;margin-top:clamp(12px,2.4vh,24px);}
+#st-title .sub b{color:var(--ink);font-weight:600;}
+.arc{display:flex;gap:11px;flex-wrap:wrap;margin-top:clamp(18px,3.6vh,36px);}
+.arc .step{display:flex;align-items:center;gap:9px;border:1px solid var(--card-bd);background:var(--card);
+  border-radius:11px;padding:8px 13px;font-size:clamp(12px,1.7vh,15px);color:var(--ink);}
+.arc .step i{font-family:var(--mono);font-style:normal;font-size:11px;color:var(--amber);}
+.arc .sep{align-self:center;color:var(--faint);font-family:var(--mono);}
+
+/* ---------- Coda stage ---------- */
+.codaP{font-size:clamp(13.5px,1.95vh,17.5px);line-height:1.65;color:var(--muted);max-width:62ch;}
+.codaP b{color:var(--ink);font-weight:600;}
+.codaP .pill{font-family:var(--mono);font-size:.85em;background:var(--panel);border:1px solid var(--card-bd);border-radius:6px;padding:1px 7px;color:var(--ink);white-space:nowrap;}
+.simpl{list-style:none;display:flex;flex-direction:column;gap:clamp(7px,1.2vh,12px);}
+.simpl li{position:relative;padding-left:22px;font-size:clamp(11.5px,1.6vh,14px);line-height:1.5;color:var(--muted);}
+.simpl li::before{content:"";position:absolute;left:2px;top:.55em;width:8px;height:8px;border-radius:2px;
+  background:var(--amber);transform:rotate(45deg);opacity:.8;}
+.simpl b{color:var(--ink);}
+.srcline{margin-top:clamp(12px,2.2vh,20px);padding-top:11px;border-top:1px dashed var(--card-bd);
+  font-size:clamp(10.5px,1.4vh,12.5px);line-height:1.6;color:var(--faint);}
+
+/* ---------- Chrome ---------- */
+.progress{position:fixed;top:0;left:0;height:3px;z-index:60;width:0;
+  background:linear-gradient(90deg,var(--amber),var(--teal));transition:width .4s ease;}
+.chrome{position:fixed;left:0;right:0;bottom:0;z-index:55;display:flex;align-items:center;
+  padding:10px clamp(22px,3.2vw,56px);font-family:var(--mono);font-size:11.5px;color:var(--faint);
+  letter-spacing:.05em;pointer-events:none;}
+.chrome .mid{flex:1;text-align:center;opacity:.8;}
+.chrome #runState.on{color:var(--good);}
+.chrome #stepCounter{color:var(--muted);}
+
+@media (max-width:980px){
+  body{overflow:auto}
+  .stage{position:relative;inset:auto;opacity:1;visibility:visible;transform:none;min-height:100vh;}
+  .sbody{grid-template-columns:1fr;}
+  .grid2{grid-template-columns:1fr;}
+}
+@media (prefers-reduced-motion:reduce){
+  .bg,#st-title h1{animation:none}
+  #st-title h1{color:var(--ink);-webkit-text-fill-color:var(--ink);}
+  [data-anim]{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div><div class="grain"></div><div class="vignette"></div>
+<div class="progress" id="progress"></div>
+
+<div class="deck">
+
+  <!-- ============ 0 · TITLE ============ -->
+  <section class="stage active" id="st-title">
+    <div class="eyebrow" data-anim>Session 03 · AI Coding Agents for Engineering Research</div>
+    <h1 data-anim>Nobody writes the&nbsp;weights.</h1>
+    <p class="sub" data-anim>This demo is a <b>complete transformer</b>: embeddings, one attention head,
+      unembedding, <b><span id="heroParams">1,152</span> parameters</b> in all. It predicts the next word in a
+      small made-up language, and it is simple enough to <b>train entirely in this browser</b>: real forward
+      pass, real backpropagation, real gradient descent.</p>
+    <div class="arc" data-anim>
+      <span class="step">the machine</span><span class="sep">→</span>
+      <span class="step">the task</span><span class="sep">→</span>
+      <span class="step">ask it</span><span class="sep">→</span>
+      <span class="step">train it, live</span><span class="sep">→</span>
+      <span class="step">ask it again</span>
+    </div>
+    <div class="legendline" data-anim style="margin-top:clamp(16px,3vh,30px)">
+      <span>its whole world is 16 words:</span>
+      <span><span class="dot" style="background:var(--teal)"></span>animals</span>
+      <span><span class="dot" style="background:var(--amber)"></span>sounds</span>
+      <span><span class="dot" style="background:var(--indigo)"></span>adjectives</span>
+      <span><span class="dot" style="background:var(--rose)"></span>“says”</span>
+      <span><span class="dot" style="background:#76819a"></span>function words</span>
+    </div>
+  </section>
+
+  <!-- ============ 1 · THE BIG PICTURE ============ -->
+  <section class="stage" id="st-flow">
+    <div class="shead" data-anim>
+      <div class="eyebrow">01 · The shape of the machine</div>
+      <h2>A word goes in as a vector. Matrices do the rest.</h2>
+      <div class="point"><b>The point:</b> the whole model is a short chain of matrix multiplications.
+        A word becomes a vector of 16 numbers; that vector is multiplied through a handful of matrices
+        (with a softmax or two along the way); the final vector is read out as a probability for every
+        word in the vocabulary. Stay at this altitude for now; the names come on the next screen.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim style="justify-content:center">
+        <div class="tokens" id="flowToks" style="justify-content:center"></div>
+        <div class="pipe">
+          <div class="pitem"><div class="plab">the word</div><div class="ptok" id="pipeWord">cat</div></div>
+          <span class="parr">→</span>
+          <div class="pitem"><div class="plab">its vector<br>(16 numbers)</div><canvas id="pipeVin" class="pvec"></canvas></div>
+          <span class="parr">×</span>
+          <div class="pitem"><div class="plab">a matrix</div><canvas id="pipeM1" class="pmat"></canvas></div>
+          <span class="parr">×</span>
+          <div class="pitem"><div class="plab">another</div><canvas id="pipeM2" class="pmat"></canvas></div>
+          <span class="parr">×</span>
+          <div class="pitem"><div class="plab">…a few more</div><canvas id="pipeM3" class="pmat"></canvas></div>
+          <span class="parr">→</span>
+          <div class="pitem"><div class="plab">output vector</div><canvas id="pipeVout" class="pvec"></canvas></div>
+          <span class="parr">→</span>
+          <div class="pitem" style="flex:1 1 clamp(340px,34vw,680px);min-width:300px"><div class="plab">softmax → p(next word)</div>
+            <div class="barwrap" style="width:100%"><div class="bars" id="pipeBars" style="height:clamp(110px,17vh,190px)"></div></div></div>
+        </div>
+        <div class="eqbox" id="pipeEq" style="margin-top:clamp(12px,2.4vh,22px)"></div>
+      </div>
+      <aside class="notes" data-anim>
+        <div class="nhead">What to notice</div>
+        <ol>
+          <li><b>Reading a word = looking up its row of numbers.</b> Those 16 numbers are the model's entire notion of “cat”.</li>
+          <li>Everything after the lookup is <b>multiply-by-a-matrix</b>, a handful of times. <span class="obs">There is no grammar module hiding anywhere.</span></li>
+          <li>The final vector holds <b>a score for each of the 16 vocabulary words</b>; softmax squashes the scores into probabilities.</li>
+          <li><b>Click a different word:</b> the input vector changes and the matrices stay put. <span class="obs">One fixed machine processes every word.</span></li>
+        </ol>
+        <div class="aside">
+          <b>What softmax does:</b> the raw scores come out at any size, positive or negative. Softmax
+          exponentiates each one and divides by the total, giving 16 positive numbers that sum to 1.
+          <div id="smEq" style="margin:9px 0;text-align:center"></div>
+          <canvas id="smCv" style="width:100%;height:96px;border:1px solid var(--card-bd);border-radius:8px"></canvas>
+          <div style="margin-top:5px">left: the 16 raw scores from the pipeline · right: after softmax</div>
+        </div>
+        <div class="aside">The matrix entries are the model's <b>1,152 parameters</b>. Today they start out random, so the output probabilities are junk; screen 04 shows this directly.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 2 · THE MATRICES, NAMED ============ -->
+  <section class="stage" id="st-anatomy">
+    <div class="shead" data-anim>
+      <div class="eyebrow">02 · The matrices, named</div>
+      <h2>Seven matrices hold the model's 1,152 numbers.</h2>
+      <div class="point"><b>The point:</b> here are the abstract matrices from the last screen with their real
+        names and jobs. Two read the input, four form the attention head you met in session 2, one scores the
+        vocabulary. Training exists to fill in their entries.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim style="justify-content:center">
+        <div class="anat" id="anat"></div>
+        <div class="eqbox" id="anatEq" style="margin-top:clamp(12px,2.4vh,22px)"></div>
+      </div>
+      <aside class="notes" data-anim>
+        <div class="nhead">What to notice</div>
+        <ol>
+          <li><b>W<sub>E</sub> is the dictionary</b>, with one row per word. <b>W<sub>pos</sub></b> adds “where am I in the sentence”, so the same word at a different position gets a different vector.</li>
+          <li><b>W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub>, W<sub>O</sub></b> are session 2's attention head: <span class="obs">what am I looking for · what do I offer · what do I carry · write it back</span>.</li>
+          <li><b>W<sub>U</sub></b> holds one output direction per word; dot the running vector against all 16 and softmax. That is the prediction.</li>
+          <li><b>Count the entries:</b> 256+128+128+128+128+128+256 = <b>1,152</b>. The heatmaps show the live values, still random static.</li>
+        </ol>
+        <div class="aside">Keep this map in mind: later you will pick <b>any single one of these cells</b> and watch calculus update it.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 3 · THE TASK ============ -->
+  <section class="stage" id="st-task">
+    <div class="shead" data-anim>
+      <div class="eyebrow">03 · The task</div>
+      <h2>One task: predict the next token.</h2>
+      <div class="point"><b>The point:</b> the text itself supplies the supervision, with no labels and no teacher.
+        At every position the model guesses the next word, and <b>cross-entropy</b>
+        <span class="pill">L = −log p(correct)</span> scores the guess. Every parameter, embeddings included,
+        exists only to push that number down.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim style="justify-content:center">
+        <div class="grid2">
+          <div>
+            <div class="subhead"><b>The vocabulary</b> — all 16 words</div>
+            <div class="vocab">
+              <div class="vrow"><span class="vlab">animals</span><div class="tokens" style="margin:0">
+                <span class="tk static" style="color:var(--teal)">cat</span><span class="tk static" style="color:var(--teal)">dog</span><span class="tk static" style="color:var(--teal)">cow</span><span class="tk static" style="color:var(--teal)">duck</span></div></div>
+              <div class="vrow"><span class="vlab">their sounds</span><div class="tokens" style="margin:0">
+                <span class="tk static" style="color:var(--amber)">meow</span><span class="tk static" style="color:var(--amber)">woof</span><span class="tk static" style="color:var(--amber)">moo</span><span class="tk static" style="color:var(--amber)">quack</span></div></div>
+              <div class="vrow"><span class="vlab">adjectives</span><div class="tokens" style="margin:0">
+                <span class="tk static" style="color:var(--indigo)">small</span><span class="tk static" style="color:var(--indigo)">big</span><span class="tk static" style="color:var(--indigo)">hungry</span><span class="tk static" style="color:var(--indigo)">sleepy</span></div></div>
+              <div class="vrow"><span class="vlab">verb</span><div class="tokens" style="margin:0">
+                <span class="tk static" style="color:var(--rose)">says</span></div></div>
+              <div class="vrow"><span class="vlab">function</span><div class="tokens" style="margin:0">
+                <span class="tk static" style="color:#9aa6bb">the</span><span class="tk static" style="color:#9aa6bb">a</span><span class="tk static" style="color:#9aa6bb">.</span></div></div>
+            </div>
+            <div class="kv" style="margin-top:14px"><span>grammar <b>the/a (adj)* ANIMAL says SOUND .</b></span><span>each animal owns one sound</span></div>
+          </div>
+          <div>
+            <div class="subhead"><b>The training corpus</b> — <span id="corpusCount">48</span> sentences sampled from the grammar</div>
+            <div class="corpusbox" id="corpusBox" style="height:clamp(240px,46vh,520px)"></div>
+          </div>
+        </div>
+      </div>
+      <aside class="notes" data-anim>
+        <div class="nhead">What to notice</div>
+        <ol>
+          <li><b>There is no answer key.</b> Cover the next word, guess it, score the guess, repeated over the corpus. Every LLM you use trains on this same signal.</li>
+          <li>The score is <b>L&nbsp;=&nbsp;−log&nbsp;p(correct)</b>. Confidently right → near 0. Confidently wrong → enormous. Read <span class="mono">e^L</span> as the number of choices the model is hedging between; a clueless model hedges over all 16 (ln 16 ≈ 2.77 nats).</li>
+          <li><span class="obs">Some positions are predictable and some are not:</span> after “says” the animal determines the next word; after “the” several words remain possible. That difference becomes the dashed floor on the training screen.</li>
+        </ol>
+        <div class="aside">The corpus is deliberately tiny and synthetic, so every quantity on the next screens is exactly computable, including the floor the loss cannot go below.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 4 · ASK IT (UNTRAINED) ============ -->
+  <section class="stage" id="st-predict">
+    <div class="shead" data-anim>
+      <div class="eyebrow">04 · Ask it something</div>
+      <h2>Type a sentence. It predicts the next word.</h2>
+      <div class="point"><b>The point:</b> the machine already runs: vector in, matrices, probabilities out.
+        Its 1,152 numbers are still random, so this screen shows what an untrained language model produces.
+        We will return to this exact screen after training.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim style="justify-content:center"><div id="predictA"></div></div>
+      <aside class="notes" data-anim>
+        <div class="nhead">What to notice</div>
+        <ol>
+          <li><b>Type any sentence</b> from the 16-word vocabulary (or tap the chips). The prediction updates live as you type.</li>
+          <li><span class="obs">Whatever you type, the model hedges across ~16 words</span>; the flat bars show it has learned nothing yet.</li>
+          <li><b>Try “the cat says”.</b> The correct answer gets no special treatment yet.</li>
+          <li><b>▶ complete</b> lets it keep choosing its own next word; untrained, it produces word salad.</li>
+        </ol>
+        <div class="aside">The context window is <b>8 tokens</b>; the model cannot see further back. Real LLMs have the same limit, just ~10⁵× wider.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 5 · TRAINING LIVE ============ -->
+  <section class="stage" id="st-train">
+    <div class="shead" data-anim>
+      <div class="eyebrow">05 · Training, live</div>
+      <h2>Loss falls toward the entropy floor.</h2>
+      <div class="point"><b>The point:</b> one rule does everything: <span class="pill">θ ← θ − η·∂L/∂θ</span>,
+        applied to all <span id="p2count">1,152</span> parameters at once, step after step. Watch it push the loss to the
+        entropy floor, pull the random embedding cloud into meaningful clusters, and teach “says” to look back at the animal.
+        None of this is programmed anywhere.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim>
+        <div class="controls">
+          <button class="btn play" id="playBtn">▶ train</button>
+          <button class="btn" id="step1">step ×1</button>
+          <button class="btn" id="step25">step ×25</button>
+          <button class="btn" id="resetBtn">↺ reset (new seed)</button>
+          <div class="ctl">optimizer
+            <span class="switch"><button id="optAdam" class="on">Adam</button><button id="optSgd">SGD</button></span></div>
+          <div class="ctl">learning rate η <span class="v" id="lrVal">0.05</span>
+            <input type="range" id="lrSlider" min="0" max="100" value="50"></div>
+          <div class="ctl">seed <span class="v" id="seedVal">11</span></div>
+        </div>
+        <div class="banner-green" id="convBanner"></div>
+        <div class="grid2" style="flex:1;align-content:start">
+          <div>
+            <div class="subhead"><b>Cross-entropy loss</b> per batch (8 sentences) · dashed = irreducible entropy of the corpus (<span id="irrVal">—</span> nats)</div>
+            <canvas id="lossCv" class="panelframe" style="height:31vh"></canvas>
+            <div class="subhead" style="margin-top:12px"><b>Attention probe</b> on “<span class="mono" id="probeLabel"></span>” — where each token looks</div>
+            <canvas id="attnCv" class="panelframe" style="height:21vh"></canvas>
+          </div>
+          <div>
+            <div class="subhead"><b>Token embeddings</b> — rows of W<sub>E</sub>, live PCA · trails = recent motion</div>
+            <canvas id="pcaCv" class="panelframe" style="height:31vh"></canvas>
+            <div class="subhead" style="margin-top:12px"><b>p(correct sound after “says”)</b> over training · watch for the sudden jump</div>
+            <canvas id="probCv" class="panelframe" style="height:21vh"></canvas>
+          </div>
+        </div>
+      </div>
+      <aside class="notes" data-anim>
+        <div class="nhead">While it trains, watch for</div>
+        <ol>
+          <li><b>The loss dives, then flattens at the dashed line.</b> <span class="obs">The leftover loss equals the corpus's built-in uncertainty from the last screen; no model can go below it.</span> Training auto-pauses when it converges.</li>
+          <li><b>The embedding map organises itself.</b> 16 words start as random scatter; the four animals drift into one region, the four sounds into another. <span class="obs">Nothing in the code asks for these clusters.</span></li>
+          <li><b>The attention probe sharpens.</b> The boxed “says” row concentrates onto <b>cat</b>; the model discovers that “says” must look back at the animal.</li>
+          <li><b>The sparkline snaps.</b> p(meow) goes from ~0.06 to ~1.00 in a narrow window of steps; learning often happens suddenly.</li>
+          <li><b>↺ reset and train again.</b> <span class="obs">The same structure re-emerges from a different random start, every run.</span></li>
+          <li><b>Then break it:</b> drag η far right so the steps overshoot the valley and the loss spikes. Compare <b>SGD</b> vs <b>Adam</b> at the default η.</li>
+        </ol>
+        <div class="aside">Every number on this screen comes from real forward/backward passes running in this tab; the gradients are verified against finite differences.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 6 · ASK IT AGAIN ============ -->
+  <section class="stage" id="st-predict2">
+    <div class="shead" data-anim>
+      <div class="eyebrow">06 · Ask it again</div>
+      <h2>The same machinery with new numbers.</h2>
+      <div class="point"><b>The point:</b> the code is unchanged since screen 04; gradient descent rewrote
+        only the 1,152 matrix entries. Ask it the same questions and compare.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim style="justify-content:center"><div id="predictB"></div></div>
+      <aside class="notes" data-anim>
+        <div class="nhead">What to notice</div>
+        <ol>
+          <li><b>“the cat says”</b> now puts essentially all probability on <b>meow</b>; the hedging count collapses from ~16 toward 1.</li>
+          <li><b>Stop after “the”.</b> Many words are legal there, and the model spreads probability across them. <span class="obs">Low loss requires calibration, including correct uncertainty where the grammar branches.</span></li>
+          <li><b>▶ complete</b> now writes grammatical sentences in the micro-language.</li>
+          <li>If training hasn't run yet, this screen looks exactly like screen 04. <span class="obs">Press space, wait twenty seconds, and watch the bars sharpen in place.</span></li>
+        </ol>
+        <div class="aside">Both prediction screens query the <b>same live model</b>; this one simply sits after the training screen in the deck.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 7 · ONE UPDATE ============ -->
+  <section class="stage" id="st-micro">
+    <div class="shead" data-anim>
+      <div class="eyebrow">Extra 1 (key 8) · One update, under the microscope</div>
+      <h2>Backpropagation assigns the blame.</h2>
+      <div class="point"><b>The point:</b> “training” repeats one procedure: run forward, measure the loss,
+        let the chain rule (<b>backpropagation</b>) assign each weight its share of the blame, then nudge every weight
+        against its gradient. Here is that story for <em>one single number you choose</em>.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim>
+        <div class="grid2" style="flex:1;align-content:start">
+          <div>
+            <div class="subhead"><b>The whole model</b> — every parameter, live · <b>click any cell</b> to put that weight under the microscope</div>
+            <div class="pstrip" id="pstrip"></div>
+            <div class="subhead" style="margin-top:13px"><b>Blame flows backwards</b> — gradient magnitude ‖∂L/∂·‖ at each stage, one example, live</div>
+            <canvas id="bpCv" class="panelframe" style="height:22vh"></canvas>
+          </div>
+          <div>
+            <div class="subhead"><b>Your watched weight</b></div>
+            <div class="wbox">
+              <div class="big" id="wName">W<sub>U</sub>[ , ]</div>
+              <div class="statline" id="wRole"></div>
+              <div class="eqbox" id="wEq" style="margin-top:10px"></div>
+              <div class="controls" style="margin:10px 0 0">
+                <button class="btn" id="wStep">apply this update (one step)</button>
+              </div>
+              <div class="statline" id="wHist"></div>
+            </div>
+            <details class="math">
+              <summary>The two cleanest links in the chain</summary>
+              <div class="body">
+                <div id="bpMath1" style="margin-bottom:10px"></div>
+                <div id="bpMath2"></div>
+              </div>
+            </details>
+            <p class="note" style="margin-top:10px">Multiply this story by <b style="color:#fff" id="p3count">1,152</b> weights per step
+              (124&nbsp;million for GPT-2, ~10¹¹ for a frontier model) and by millions of steps.
+              <b style="color:#fff">Every weight in every LLM is written this way.</b></p>
+          </div>
+        </div>
+      </div>
+      <aside class="notes" data-anim>
+        <div class="nhead">What to notice</div>
+        <ol>
+          <li><b>Click any cell</b> in the heatmaps to pick one number out of 1,152, with its role in the network spelled out: a component of “cat”, a column of the query lens, an output direction…</li>
+          <li>Its <b>gradient</b> is the loss's sensitivity to that one number. Backprop computes <em>all</em> of them in one backwards sweep of the chain rule; the bar chart shows their magnitudes.</li>
+          <li><span class="obs">At the output, the gradient is simply <b>prediction − truth</b></span>, which is why softmax + cross-entropy is the standard pairing (open the math box).</li>
+          <li><b>“Apply this update”</b> moves the weight against its gradient by η·g, and every other weight moves with it. <span class="obs">That is one full step; the training screen ran hundreds of them.</span></li>
+        </ol>
+        <div class="aside">If training is still running (space bar), the heatmaps shimmer; those are the live parameter values changing under gradient descent.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 8 · THE TEST ============ -->
+  <section class="stage" id="st-test">
+    <div class="shead" data-anim>
+      <div class="eyebrow">Extra 2 (key 9) · The test</div>
+      <h2>Did it learn the rule or memorise the corpus?</h2>
+      <div class="point"><b>The point:</b> four sentences were <em>deliberately deleted from the corpus before training</em>.
+        If the model completes them correctly anyway, it must have learned the <b>rule</b>:
+        find the animal, whatever surrounds it, and emit its sound.</div>
+    </div>
+    <div class="sbody">
+      <div class="viz" data-anim style="justify-content:center">
+        <div class="gen">
+          <span class="note">prompt:</span>
+          <select id="genSel" class="btn"></select>
+          <button class="btn" id="genBtn">▶ complete</button>
+          <span class="note" id="genHeld"></span>
+        </div>
+        <div class="genout" id="genOut">—</div>
+        <div class="subhead"><b>The model's distribution for the next token</b> — at the moment of the first generated word</div>
+        <div class="barwrap"><div class="bars" id="genBars"></div></div>
+      </div>
+      <aside class="notes" data-anim>
+        <div class="nhead">What to notice</div>
+        <ol>
+          <li><b>Before training</b> (or right after ↺ reset): any prompt completes to noise.</li>
+          <li><b>After training:</b> all four held-out prompts complete correctly. <span class="obs">These exact sentences were never in the training data, so recall is impossible.</span></li>
+          <li>The bars show <b>where the probability went</b>: essentially all of it on the right sound.</li>
+          <li><b>Where does generalisation live?</b> In the embedding map on the training screen: animals share a region of embedding space, so a never-seen adjective–animal combination rides exactly the same machinery as a seen one. <span class="obs">Generalisation is geometry.</span></li>
+        </ol>
+        <div class="aside">This is a minimal <b>train/test split</b>, the held-out set behind every model evaluation you will read or run.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 9 · CODA ============ -->
+  <section class="stage" id="st-coda">
+    <div class="shead" data-anim>
+      <div class="eyebrow">Extra 3 (key 0) · Scale</div>
+      <h2>From 1,152 parameters to 10¹¹.</h2>
+    </div>
+    <div class="sbody" style="grid-template-columns:1.1fr 1fr">
+      <div class="viz" data-anim style="justify-content:center">
+        <p class="codaP">Everything you just watched <b>scales without changing its nature</b>. GPT-2 small is this
+          exact loop with d=768, 12 heads × 12 layers, LayerNorm and MLPs in the stack, AdamW instead of Adam,
+          trained on ~8&nbsp;billion tokens instead of 48 sentences. Frontier models add orders of magnitude and
+          <b>keep the same ideas</b>: the loss is still <span class="pill">−log p(next token)</span>, the update is still
+          <span class="pill">θ ← θ − η·∂L/∂θ</span>.</p>
+        <p class="codaP" style="margin-top:clamp(10px,2vh,18px)">The embeddings and attention lenses we studied in
+          session 2 are just rows and columns of θ that <b>this loop wrote</b>. What scale adds is what those simple
+          parts <em>compose into</em>: induction heads and in-context learning, which is where we go next.</p>
+        <div class="srcline">Sources: Rumelhart, Hinton &amp; Williams (1986), backpropagation · Bengio et&nbsp;al. (2003), neural LM ·
+          Kingma &amp; Ba (2015), Adam · Vaswani et&nbsp;al. (2017), attention · Radford et&nbsp;al. (2019), GPT-2 ·
+          Elhage et&nbsp;al. (2021), transformer circuits. Model, loss and every gradient computed live in this tab;
+          backward pass verified against finite differences.</div>
+      </div>
+      <aside class="notes" data-anim>
+        <div class="nhead">The fine print</div>
+        <ul class="simpl">
+          <li><b>The architecture is minimal:</b> one head, residual connection, no LayerNorm, no MLP, no multi-head. Each omitted piece matters at scale; none changes what “training” means.</li>
+          <li><b>The corpus is tiny and synthetic</b>, so “generalisation” here means held-out <em>combinations</em> rather than held-out <em>concepts</em>, a far weaker test than real corpora pose.</li>
+          <li><b>Plain Adam/SGD on whole-sentence batches.</b> Real training: AdamW, gradient clipping, token windows in the millions, warmup/decay schedules.</li>
+          <li><b>The PCA map is a 2-D shadow of 16-D:</b> trust within-frame distances and ignore frame-to-frame rotation.</li>
+          <li><b>The reset seeds are curated</b> for a visually crisp attention pattern. On some seeds the model solves the task with a <em>diffuse</em> pattern instead; both are valid minima of the same loss, and a warning that attention maps alone don't tell you where information flows.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+</div>
+
+<div class="chrome">
+  <span><span id="stepCounter">step 0</span> <span id="runState">· paused</span></span>
+  <span class="mid">← → screens &nbsp;·&nbsp; space trains from any screen &nbsp;·&nbsp; 8 9 0 extras</span>
+  <span id="counter">1 / 6</span>
+</div>
+
+<script src="lib/katex.min.js"></script>
+<script>
+"use strict";
+/* =======================================================================
+   MICRO-TRANSFORMER — engine from Tool 4 ("How Transformers Learn"),
+   verified by gradient check against finite differences.
+======================================================================= */
+function zeros(r,c){const M=[];for(let i=0;i<r;i++)M.push(new Float64Array(c));return M;}
+function mulberry32(seed){let a=seed>>>0;return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return ((t^(t>>>14))>>>0)/4294967296;};}
+function randn(rng){let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function initMat(r,c,scale,rng){const M=zeros(r,c);for(let i=0;i<r;i++)for(let j=0;j<c;j++)M[i][j]=randn(rng)*scale;return M;}
+function matmul(A,B){const r=A.length,inner=B.length,c=B[0].length,C=zeros(r,c);
+  for(let i=0;i<r;i++){const Ai=A[i],Ci=C[i];for(let k=0;k<inner;k++){const a=Ai[k];if(a===0)continue;const Bk=B[k];for(let j=0;j<c;j++)Ci[j]+=a*Bk[j];}}return C;}
+function transpose(A){const r=A.length,c=A[0].length,T=zeros(c,r);for(let i=0;i<r;i++)for(let j=0;j<c;j++)T[j][i]=A[i][j];return T;}
+function softmaxRow(z){const m=Math.max.apply(null,Array.from(z));let s=0;const e=new Float64Array(z.length);
+  for(let i=0;i<z.length;i++){e[i]=Math.exp(z[i]-m);s+=e[i];}for(let i=0;i<z.length;i++)e[i]/=s;return e;}
+const froNorm=M=>{let s=0;for(const r of M)for(const x of r)s+=x*x;return Math.sqrt(s);};
+
+class MicroFormer{
+  constructor(V,d,dk,nCtx,seed){
+    this.V=V;this.d=d;this.dk=dk;this.nCtx=nCtx;this.seed=seed;
+    const rng=mulberry32(seed||42);const s=0.4;
+    this.E =initMat(V,d,s,rng);
+    this.P =initMat(nCtx,d,s,rng);
+    this.Wq=initMat(d,dk,s,rng);this.Wk=initMat(d,dk,s,rng);this.Wv=initMat(d,dk,s,rng);
+    this.Wo=initMat(dk,d,s,rng);this.Wu=initMat(d,V,s,rng);
+    this.params=["E","P","Wq","Wk","Wv","Wo","Wu"];
+    this._initAdam();this.step=0;
+  }
+  _initAdam(){this.m={};this.v={};for(const p of this.params){const M=this[p];this.m[p]=zeros(M.length,M[0].length);this.v[p]=zeros(M.length,M[0].length);}}
+  nParams(){let n=0;for(const p of this.params){const M=this[p];n+=M.length*M[0].length;}return n;}
+  forward(tokens){
+    const n=tokens.length,{d,dk}=this;
+    const X=zeros(n,d);
+    for(let t=0;t<n;t++)for(let j=0;j<d;j++)X[t][j]=this.E[tokens[t]][j]+this.P[t][j];
+    const Q=matmul(X,this.Wq),K=matmul(X,this.Wk),Vv=matmul(X,this.Wv);
+    const scale=1/Math.sqrt(dk);
+    const A=zeros(n,n);
+    for(let i=0;i<n;i++){
+      const srow=new Float64Array(i+1);
+      for(let j=0;j<=i;j++){let s=0;for(let k=0;k<dk;k++)s+=Q[i][k]*K[j][k];srow[j]=s*scale;}
+      const a=softmaxRow(srow);
+      for(let j=0;j<=i;j++)A[i][j]=a[j];
+    }
+    const O=matmul(A,Vv);
+    const Hattn=matmul(O,this.Wo);
+    const H=zeros(n,d);
+    for(let t=0;t<n;t++)for(let j=0;j<d;j++)H[t][j]=X[t][j]+Hattn[t][j];
+    const logits=matmul(H,this.Wu);
+    const probs=logits.map(r=>softmaxRow(r));
+    return {tokens,n,X,Q,K,Vv,A,O,Hattn,H,logits,probs};
+  }
+  lossAndGrad(tokens,diag){
+    const c=this.forward(tokens);
+    const {n,X,Q,K,Vv,A,O,H,probs}=c,{d,dk,V}=this;
+    const nPred=n-1;let loss=0;
+    const dLogits=zeros(n,V);
+    for(let t=0;t<nPred;t++){
+      const target=tokens[t+1];
+      loss+=-Math.log(Math.max(probs[t][target],1e-12));
+      for(let v=0;v<V;v++)dLogits[t][v]=(probs[t][v]-(v===target?1:0))/nPred;
+    }
+    loss/=nPred;
+    const g={};for(const p of this.params){const M=this[p];g[p]=zeros(M.length,M[0].length);}
+    const dH=matmul(dLogits,transpose(this.Wu));
+    const gWu=matmul(transpose(H),dLogits);
+    const dO=matmul(dH,transpose(this.Wo));
+    const gWo=matmul(transpose(O),dH);
+    const dXres=dH;
+    const dA=matmul(dO,transpose(Vv));
+    const dVv=matmul(transpose(A),dO);
+    const scale=1/Math.sqrt(dk);
+    const dQ=zeros(n,dk),dK=zeros(n,dk);
+    const dS=zeros(n,n);
+    for(let i=0;i<n;i++){
+      let dotv=0;for(let j=0;j<=i;j++)dotv+=dA[i][j]*A[i][j];
+      for(let j=0;j<=i;j++){
+        const ds0=A[i][j]*(dA[i][j]-dotv);dS[i][j]=ds0;
+        const ds=ds0*scale;
+        for(let k=0;k<dk;k++){dQ[i][k]+=ds*K[j][k];dK[j][k]+=ds*Q[i][k];}
+      }
+    }
+    const dX=zeros(n,d);
+    const addmm=(dOut,W,gW)=>{
+      const dXp=matmul(dOut,transpose(W));
+      for(let i=0;i<n;i++)for(let j=0;j<d;j++)dX[i][j]+=dXp[i][j];
+      const gg=matmul(transpose(X),dOut);
+      for(let i=0;i<gW.length;i++)for(let j=0;j<gW[0].length;j++)gW[i][j]+=gg[i][j];
+    };
+    addmm(dQ,this.Wq,g.Wq);addmm(dK,this.Wk,g.Wk);addmm(dVv,this.Wv,g.Wv);
+    for(let i=0;i<n;i++)for(let j=0;j<d;j++)dX[i][j]+=dXres[i][j];
+    for(let t=0;t<n;t++)for(let j=0;j<d;j++){g.E[tokens[t]][j]+=dX[t][j];g.P[t][j]+=dX[t][j];}
+    for(let i=0;i<dk;i++)for(let j=0;j<d;j++)g.Wo[i][j]+=gWo[i][j];
+    for(let i=0;i<d;i++)for(let j=0;j<V;j++)g.Wu[i][j]+=gWu[i][j];
+    if(diag){
+      c.gradNorms={
+        "∂L/∂logits":froNorm(dLogits),"∂L/∂H":froNorm(dH),"∂L/∂(A·V)":froNorm(dO),
+        "∂L/∂A":froNorm(dA),"∂L/∂scores":froNorm(dS),"∂L/∂Q":froNorm(dQ),"∂L/∂K":froNorm(dK),
+        "∂L/∂X":froNorm(dX)
+      };
+    }
+    return {loss,grads:g,cache:c};
+  }
+  batchLossAndGrad(batch){
+    let loss=0;const G={};for(const p of this.params){const M=this[p];G[p]=zeros(M.length,M[0].length);}
+    for(const seq of batch){
+      const {loss:L,grads}=this.lossAndGrad(seq);
+      loss+=L/batch.length;
+      for(const p of this.params){const g=grads[p],a=G[p];for(let i=0;i<a.length;i++)for(let j=0;j<a[0].length;j++)a[i][j]+=g[i][j]/batch.length;}
+    }
+    return {loss,grads:G};
+  }
+  applySGD(grads,lr){
+    for(const p of this.params){const M=this[p],g=grads[p];
+      for(let i=0;i<M.length;i++)for(let j=0;j<M[0].length;j++)M[i][j]-=lr*g[i][j];}
+    this.step++;
+  }
+  applyAdam(grads,lr){
+    const b1=0.9,b2=0.999,eps=1e-8;this.step++;const t=this.step;
+    for(const p of this.params){const M=this[p],g=grads[p],m=this.m[p],v=this.v[p];
+      for(let i=0;i<M.length;i++)for(let j=0;j<M[0].length;j++){
+        m[i][j]=b1*m[i][j]+(1-b1)*g[i][j];
+        v[i][j]=b2*v[i][j]+(1-b2)*g[i][j]*g[i][j];
+        const mh=m[i][j]/(1-Math.pow(b1,t)),vh=v[i][j]/(1-Math.pow(b2,t));
+        M[i][j]-=lr*mh/(Math.sqrt(vh)+eps);
+      }}
+  }
+}
+
+/* ---------- the micro-language ---------- */
+const VOCAB=["the","a","small","big","hungry","sleepy","cat","dog","cow","duck","says","meow","woof","moo","quack","."];
+const TOK=new Map(VOCAB.map((w,i)=>[w,i]));
+const ANIMALS=["cat","dog","cow","duck"], SOUNDS={cat:"meow",dog:"woof",cow:"moo",duck:"quack"};
+const ADJS=["small","big","hungry","sleepy"], DETS=["the","a"];
+/* palette-mapped word categories: animals teal · sounds amber · adjectives indigo · says rose · function grey */
+const CATRGB=w=>ANIMALS.includes(w)?[95,210,194]:Object.values(SOUNDS).includes(w)?[232,176,75]:ADJS.includes(w)?[142,160,232]:w==="says"?[217,138,168]:[118,129,154];
+const CAT=w=>{const c=CATRGB(w);return `rgb(${c[0]},${c[1]},${c[2]})`;};
+const CATA=(w,a)=>{const c=CATRGB(w);return `rgba(${c[0]},${c[1]},${c[2]},${a})`;};
+const seqOf=ws=>ws.map(w=>TOK.get(w));
+/* held-out test sentences — guaranteed excluded from the corpus */
+const TESTS=[
+  ["the","sleepy","duck","says"],
+  ["a","hungry","cat","says"],
+  ["the","big","small","cow","says"],
+  ["a","dog","says"],
+];
+const testKeys=new Set(TESTS.map(t=>{const an=t[t.length-2];return [...t,SOUNDS[an],"."].join(" ");}));
+function makeCorpus(rng,nSent){
+  const seen=new Set(),corpus=[];
+  let guard=0;
+  while(corpus.length<nSent&&guard++<5000){
+    const det=DETS[(rng()*2)|0];
+    const nAdj=[0,1,1,2][(rng()*4)|0];
+    const adjs=[];const pool=ADJS.slice();
+    for(let i=0;i<nAdj;i++)adjs.push(pool.splice((rng()*pool.length)|0,1)[0]);
+    const an=ANIMALS[(rng()*4)|0];
+    const words=[det,...adjs,an,"says",SOUNDS[an],"."];
+    const key=words.join(" ");
+    if(seen.has(key)||testKeys.has(key))continue;
+    seen.add(key);corpus.push(words);
+  }
+  return corpus;
+}
+function irreducibleLoss(corpus){
+  const ctx=new Map();
+  for(const words of corpus){
+    const seq=seqOf(words);
+    for(let t=0;t<seq.length-1;t++){
+      const key=seq.slice(0,t+1).join(",");
+      if(!ctx.has(key))ctx.set(key,new Float64Array(VOCAB.length));
+      ctx.get(key)[seq[t+1]]++;
+    }
+  }
+  let H=0,n=0;
+  for(const words of corpus){
+    const seq=seqOf(words);
+    for(let t=0;t<seq.length-1;t++){
+      const counts=ctx.get(seq.slice(0,t+1).join(","));
+      const tot=counts.reduce((a,b)=>a+b,0);
+      H+=-Math.log(counts[seq[t+1]]/tot);n++;
+    }
+  }
+  return H/n;
+}
+
+/* ---------- global state ---------- */
+const SEEDS=[11,77,7,42,21,31,55,202]; // curated: all train to 4/4 held-out AND a visually crisp says→animal pattern
+let seedIdx=0;
+const STATE={
+  seed:SEEDS[0], model:null, corpus:null, corpusSeqs:null, rng:null,
+  playing:false, lossHist:[], probHist:[], irr:0,
+  watch:{p:"Wu",i:0,j:0},
+  optimizer:"adam", lrIdx:50,
+  embTrail:[],
+  ema:null, convCount:0, converged:false, pcaScale:null,
+};
+const PROBE=["the","small","cat","says","meow","."];
+const LR_RANGE={adam:[0.002,0.3],sgd:[0.05,4]};
+function curLR(){const [lo,hi]=LR_RANGE[STATE.optimizer];return lo*Math.pow(hi/lo,STATE.lrIdx/100);}
+const setText=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+function resetModel(newSeed){
+  if(newSeed){seedIdx=(seedIdx+1)%SEEDS.length;STATE.seed=SEEDS[seedIdx];}
+  STATE.rng=mulberry32(STATE.seed);
+  STATE.corpus=makeCorpus(mulberry32(STATE.seed+1),48);
+  STATE.corpusSeqs=STATE.corpus.map(seqOf);
+  STATE.model=new MicroFormer(VOCAB.length,16,8,8,STATE.seed);
+  STATE.lossHist=[];STATE.probHist=[];STATE.embTrail=[];
+  STATE.ema=null;STATE.convCount=0;STATE.converged=false;STATE.pcaScale=null;
+  pcaPrev=null;pcaAlignedPrev=null;
+  const cb=document.getElementById("convBanner");if(cb)cb.style.display="none";
+  STATE.irr=irreducibleLoss(STATE.corpus);
+  STATE.watch={p:"Wu",i:7,j:TOK.get("meow")};
+  setText("seedVal",STATE.seed);
+  setText("irrVal",STATE.irr.toFixed(2));
+  const np=STATE.model.nParams().toLocaleString();
+  setText("heroParams",np);setText("p2count",np);setText("p3count",np);
+  const go=document.getElementById("genOut");if(go)go.textContent="—";
+  buildCorpusBox();
+  renderAll();
+}
+function trainSteps(k){
+  for(let s=0;s<k;s++){
+    const batch=[];for(let b=0;b<8;b++)batch.push(STATE.corpusSeqs[(STATE.rng()*STATE.corpusSeqs.length)|0]);
+    const {loss,grads}=STATE.model.batchLossAndGrad(batch);
+    if(STATE.optimizer==="adam")STATE.model.applyAdam(grads,curLR());
+    else STATE.model.applySGD(grads,curLR());
+    STATE.lossHist.push(loss);
+    const c=STATE.model.forward(seqOf(PROBE));
+    const pm=c.probs[3][TOK.get("meow")];
+    STATE.probHist.push(pm);
+    STATE.ema=STATE.ema==null?loss:0.95*STATE.ema+0.05*loss;
+    if(STATE.ema<STATE.irr+0.18&&pm>0.9)STATE.convCount++;else STATE.convCount=0;
+  }
+  STATE.embTrail.push(STATE.model.E.map(r=>Float32Array.from(r)));
+  if(STATE.embTrail.length>24)STATE.embTrail.shift();
+}
+
+/* ---------- shared canvas helpers ---------- */
+function katexInto(el,tex,disp){try{katex.render(tex,el,{throwOnError:false,displayMode:!!disp});}catch(e){el.textContent=tex;}}
+const dpr=()=>window.devicePixelRatio||1;
+function fitCanvas(cv){const r=cv.getBoundingClientRect();cv.width=Math.max(2,r.width*dpr());cv.height=Math.max(2,(r.height||300)*dpr());const ctx=cv.getContext("2d");ctx.setTransform(dpr(),0,0,dpr(),0,0);return {w:r.width,h:(r.height||300),ctx};}
+function divergeColor(v,scale){const t=Math.max(-1,Math.min(1,v/scale));
+  return t>=0?`rgba(232,176,75,${0.10+0.9*t})`:`rgba(142,160,232,${0.10-0.9*t})`;}
+const PANEL="#0a0e16";
+
+/* =======================================================================
+   SCREEN 01 — the big picture pipeline
+======================================================================= */
+function grayColor(v,scale){const t=Math.max(-1,Math.min(1,v/scale));
+  return t>=0?`rgba(222,230,245,${0.07+0.55*t})`:`rgba(108,122,150,${0.07-0.55*t})`;}
+function drawVecStrip(cv,vals,scale){
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const ch=h/vals.length;
+  for(let i=0;i<vals.length;i++){ctx.fillStyle=divergeColor(vals[i],scale);ctx.fillRect(0,i*ch,w,Math.max(1,ch-1));}
+}
+function drawMatTile(cv,M,gray){
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const r=M.length,c=M[0].length,cw=w/c,chh=h/r;
+  for(let i=0;i<r;i++)for(let j=0;j<c;j++){
+    ctx.fillStyle=gray?grayColor(M[i][j],1.2):divergeColor(M[i][j],1.2);
+    ctx.fillRect(j*cw,i*chh,Math.max(.6,cw-.7),Math.max(.6,chh-.7));}
+}
+let flowTok="cat";
+(function buildFlowChips(){
+  const row=document.getElementById("flowToks");
+  VOCAB.forEach(w=>{
+    const b=document.createElement("button");b.className="tk"+(w===flowTok?" q":"");
+    b.textContent=w;b.style.color=CAT(w);
+    b.onclick=()=>{flowTok=w;[...row.children].forEach(c=>c.classList.toggle("q",c.textContent===w));renderFlowEq();renderFlow();};
+    row.appendChild(b);
+  });
+})();
+function renderFlowEq(){
+  katexInto(document.getElementById("pipeEq"),
+    `p(\\text{next word}\\mid\\texttt{${flowTok}})=\\mathrm{softmax}\\big(((x\\,M_1)\\,M_2)\\cdots M_k\\big),\\qquad x=\\text{the 16 numbers standing for }\\texttt{${flowTok}}`,false);
+  katexInto(document.getElementById("smEq"),
+    `\\mathrm{softmax}(z)_i=\\frac{e^{z_i}}{\\sum_j e^{z_j}}`,false);
+}
+function drawSoftmaxMini(cv,z,p){
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const n=z.length, half=(w-44)/2, bw=half/n;
+  const mid=h*0.56, zm=Math.max(...z.map(Math.abs))||1;
+  ctx.strokeStyle="rgba(255,255,255,.16)";ctx.beginPath();ctx.moveTo(8,mid);ctx.lineTo(8+half,mid);ctx.stroke();
+  for(let i=0;i<n;i++){
+    const v=z[i]/zm*(h/2-16);
+    ctx.fillStyle=z[i]>=0?"rgba(232,176,75,.85)":"rgba(142,160,232,.85)";
+    ctx.fillRect(8+i*bw, v>=0?mid-v:mid, Math.max(1,bw-1.5), Math.abs(v)||1);
+  }
+  ctx.fillStyle="#9aa6bb";ctx.font="13px monospace";ctx.fillText("→",8+half+9,mid+4);
+  const x0=8+half+34, pm=Math.max(...p)||1;
+  ctx.strokeStyle="rgba(255,255,255,.16)";ctx.beginPath();ctx.moveTo(x0,h-12);ctx.lineTo(x0+half,h-12);ctx.stroke();
+  for(let i=0;i<n;i++){
+    const v=p[i]/pm*(h-28);
+    ctx.fillStyle="rgba(95,210,194,.9)";
+    ctx.fillRect(x0+i*bw,h-12-v,Math.max(1,bw-1.5),Math.max(1,v));
+  }
+  ctx.fillStyle="#586173";ctx.font="9px monospace";
+  ctx.fillText("scores z (±)",8,11);ctx.fillText("probabilities (sum = 1)",x0,11);
+}
+function renderFlow(){
+  const wEl=document.getElementById("pipeWord");
+  wEl.textContent=flowTok;wEl.style.color=CAT(flowTok);
+  const ti=TOK.get(flowTok),m=STATE.model;
+  const x=new Float64Array(m.d);
+  for(let j=0;j<m.d;j++)x[j]=m.E[ti][j]+m.P[0][j];
+  drawVecStrip(document.getElementById("pipeVin"),x,1.2);
+  drawMatTile(document.getElementById("pipeM1"),m.Wq,true);
+  drawMatTile(document.getElementById("pipeM2"),m.Wo,true);
+  drawMatTile(document.getElementById("pipeM3"),m.Wu,true);
+  const c=m.forward([ti]);
+  drawVecStrip(document.getElementById("pipeVout"),c.logits[0],3);
+  const p=c.probs[0];
+  drawSoftmaxMini(document.getElementById("smCv"),Array.from(c.logits[0]),Array.from(p));
+  let bi=0;for(let v=0;v<p.length;v++)if(p[v]>p[bi])bi=v;
+  const bars=document.getElementById("pipeBars");bars.innerHTML="";
+  const pm=Math.max(...p);
+  for(let v=0;v<VOCAB.length;v++){
+    const b=document.createElement("div");b.className="b";
+    b.style.height=Math.max(1,p[v]/Math.max(pm,1e-9)*100)+"%";
+    b.style.background=v===bi?"var(--amber)":"#2b3550";
+    b.title=VOCAB[v]+": "+p[v].toFixed(3);
+    const l=document.createElement("div");l.className="bl";l.textContent=VOCAB[v];
+    if(v===bi)l.style.color="var(--amber)";
+    b.appendChild(l);bars.appendChild(b);
+  }
+}
+
+/* =======================================================================
+   SCREEN 02 — the matrices, named
+======================================================================= */
+const ADEFS=[
+  {g:"read the word",items:[
+    {p:"E", tex:"W_E",      lab:"the dictionary — one row per word", dim:"16×16 = 256"},
+    {p:"P", tex:"W_{pos}",  lab:"marks where the word sits",         dim:"8×16 = 128"}]},
+  {g:"one attention head (session 2)",items:[
+    {p:"Wq",tex:"W_Q",      lab:"query — what am I looking for?",    dim:"16×8 = 128"},
+    {p:"Wk",tex:"W_K",      lab:"key — what do I offer?",            dim:"16×8 = 128"},
+    {p:"Wv",tex:"W_V",      lab:"value — what do I carry?",          dim:"16×8 = 128"},
+    {p:"Wo",tex:"W_O",      lab:"writes the head's answer back",     dim:"8×16 = 128"}]},
+  {g:"score the vocabulary",items:[
+    {p:"Wu",tex:"W_U",      lab:"one output direction per word",     dim:"16×16 = 256"}]},
+];
+const anatCvs={};
+(function buildAnat(){
+  const host=document.getElementById("anat");
+  ADEFS.forEach((grp,gi)=>{
+    if(gi){const a=document.createElement("span");a.className="aarr";a.textContent="→";host.appendChild(a);}
+    const g=document.createElement("div");g.className="agroup";
+    const hd=document.createElement("div");hd.className="aghead";hd.textContent=grp.g;g.appendChild(hd);
+    const tiles=document.createElement("div");tiles.className="atiles";g.appendChild(tiles);
+    grp.items.forEach(it=>{
+      const t=document.createElement("div");t.className="atile";
+      const cv=document.createElement("canvas");t.appendChild(cv);anatCvs[it.p]=cv;
+      const nm=document.createElement("div");nm.className="tname";katexInto(nm,it.tex,false);t.appendChild(nm);
+      const lb=document.createElement("div");lb.className="tlab";lb.textContent=it.lab;t.appendChild(lb);
+      const dm=document.createElement("div");dm.className="tdim";dm.textContent=it.dim;t.appendChild(dm);
+      tiles.appendChild(t);
+    });
+    host.appendChild(g);
+  });
+  katexInto(document.getElementById("anatEq"),
+    `x_t=W_E[\\text{word}_t]+W_{pos}[t]\\qquad A=\\mathrm{softmax}\\!\\Big(\\tfrac{(XW_Q)(XW_K)^{\\top}}{\\sqrt{d_k}}\\Big)\\qquad h=x+A\\,(XW_V)\\,W_O\\qquad p=\\mathrm{softmax}(h\\,W_U)`,false);
+})();
+function renderAnatomy(){
+  const px=6;
+  for(const k in anatCvs){
+    const M=STATE.model[k],cv=anatCvs[k];
+    cv.width=M[0].length*px;cv.height=M.length*px;
+    cv.style.width=(M[0].length*px)+"px";cv.style.height=(M.length*px)+"px";
+    const ctx=cv.getContext("2d");
+    for(let i=0;i<M.length;i++)for(let j=0;j<M[0].length;j++){
+      ctx.fillStyle=divergeColor(M[i][j],1.2);
+      ctx.fillRect(j*px,i*px,px,px);
+    }
+  }
+}
+
+/* =======================================================================
+   SCREENS 04 & 06 — prediction playground (two instances, one live model)
+======================================================================= */
+function makePredict(rootId){
+  const root=document.getElementById(rootId);
+  root.innerHTML=`
+    <div class="gen">
+      <input class="pin" type="text" spellcheck="false" autocomplete="off" value="the cat says">
+      <button class="btn pcomplete">▶ complete</button>
+      <button class="btn pclear">✕ clear</button>
+    </div>
+    <div class="tokens pchips" style="margin-top:10px"></div>
+    <div class="note pstatus"></div>
+    <div class="genout pout">—</div>
+    <div class="subhead"><b>p(next word)</b> — the model's full distribution given what you typed</div>
+    <div class="barwrap"><div class="bars pbars"></div></div>`;
+  const input=root.querySelector(".pin"),chips=root.querySelector(".pchips"),
+        status=root.querySelector(".pstatus"),out=root.querySelector(".pout"),bars=root.querySelector(".pbars");
+  VOCAB.forEach(w=>{
+    const b=document.createElement("button");b.className="tk";b.textContent=w;b.style.color=CAT(w);
+    b.onclick=()=>{input.value=(input.value.trim()+" "+w).trim();render();};
+    chips.appendChild(b);
+  });
+  function parse(){
+    const raw=input.value.toLowerCase().replace(/\./g," . ").trim();
+    if(!raw)return {toks:[],bad:[]};
+    const ws=raw.split(/\s+/);
+    return {toks:ws,bad:ws.filter(w=>!TOK.has(w))};
+  }
+  function render(){
+    const {toks,bad}=parse();
+    bars.innerHTML="";
+    if(!toks.length){status.textContent="type a sentence, or tap words below";out.textContent="—";return;}
+    if(bad.length){status.innerHTML="not in the 16-word vocabulary: <b style='color:var(--bad)'>"+bad.join(", ")+"</b>";out.textContent="—";return;}
+    if(toks.length>8){status.textContent="the model's context window is 8 tokens; shorten the sentence";out.textContent="—";return;}
+    status.textContent="";
+    const p=STATE.model.forward(seqOf(toks)).probs[toks.length-1];
+    let bi=0,H=0;
+    for(let v=0;v<p.length;v++){if(p[v]>p[bi])bi=v;if(p[v]>1e-12)H+=-p[v]*Math.log(p[v]);}
+    out.innerHTML=toks.join(" ")+" <span class='new'>"+VOCAB[bi]+"</span>"+
+      " &nbsp;<span class='note'>p = "+p[bi].toFixed(2)+" · hedging between ≈ "+Math.exp(H).toFixed(1)+" words</span>";
+    const pm=Math.max(...p);
+    for(let v=0;v<VOCAB.length;v++){
+      const b=document.createElement("div");b.className="b";
+      b.style.height=Math.max(1,p[v]/Math.max(pm,1e-9)*100)+"%";
+      b.style.background=v===bi?"var(--amber)":"#2b3550";
+      b.title=VOCAB[v]+": "+p[v].toFixed(3);
+      const l=document.createElement("div");l.className="bl";l.textContent=VOCAB[v];
+      if(v===bi)l.style.color="var(--amber)";
+      b.appendChild(l);bars.appendChild(b);
+    }
+  }
+  root.querySelector(".pcomplete").onclick=()=>{
+    const {toks,bad}=parse();
+    if(!toks.length||bad.length||toks.length>=8)return;
+    const ws=toks.slice();
+    while(ws.length<8){
+      const pr=STATE.model.forward(seqOf(ws)).probs[ws.length-1];
+      let bi=0;for(let v=0;v<pr.length;v++)if(pr[v]>pr[bi])bi=v;
+      ws.push(VOCAB[bi]);
+      if(VOCAB[bi]===".")break;
+    }
+    input.value=ws.join(" ");
+    render();
+  };
+  root.querySelector(".pclear").onclick=()=>{input.value="";render();input.focus();};
+  input.addEventListener("input",render);
+  /* hand the keyboard back to the deck so ←/→ and space work again */
+  input.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key==="Escape")input.blur();});
+  return {render};
+}
+
+/* =======================================================================
+   SCREEN 03 — the task (static: vocabulary + corpus; rebuilt on reseed)
+======================================================================= */
+function buildCorpusBox(){
+  const box=document.getElementById("corpusBox");box.innerHTML="";
+  setText("corpusCount",STATE.corpus.length);
+  STATE.corpus.forEach(ws=>{
+    const sp=document.createElement("span");sp.className="s";
+    sp.textContent=ws.join(" ");
+    box.appendChild(sp);box.appendChild(document.createTextNode("   "));
+  });
+}
+
+/* =======================================================================
+   SCREEN 05 — training cockpit
+======================================================================= */
+setText("probeLabel",PROBE.join(" "));
+function renderLoss(){
+  const cv=document.getElementById("lossCv");
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const H=STATE.lossHist;
+  const padL=34,padB=18,padT=8;
+  const ymax=Math.max(3,...H.slice(0,50)),ymin=0;
+  const X=i=>padL+(H.length<=1?0:i/(H.length-1))*(w-padL-8);
+  const Y=l=>padT+(1-(l-ymin)/(ymax-ymin))*(h-padT-padB);
+  ctx.strokeStyle="rgba(255,255,255,.08)";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,h-padB);ctx.lineTo(w-8,h-padB);ctx.stroke();
+  ctx.fillStyle="#9aa6bb";ctx.font="10.5px monospace";
+  for(const yv of [0,1,2,3]){if(yv>ymax)continue;ctx.fillText(yv.toFixed(0),8,Y(yv)+3);
+    ctx.strokeStyle="rgba(255,255,255,.04)";ctx.beginPath();ctx.moveTo(padL,Y(yv));ctx.lineTo(w-8,Y(yv));ctx.stroke();}
+  ctx.setLineDash([5,5]);ctx.strokeStyle="rgba(232,176,75,.75)";ctx.beginPath();ctx.moveTo(padL,Y(STATE.irr));ctx.lineTo(w-8,Y(STATE.irr));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="rgba(232,176,75,.95)";
+  ctx.fillText("irreducible "+STATE.irr.toFixed(2),w-130,Y(STATE.irr)-5);
+  if(H.length>1){
+    ctx.strokeStyle="rgba(95,210,194,.25)";ctx.lineWidth=1;ctx.beginPath();
+    H.forEach((l,i)=>{const x=X(i),y=Y(Math.min(l,ymax));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+    ctx.strokeStyle="#5fd2c2";ctx.lineWidth=2;ctx.beginPath();
+    let e=H[0];H.forEach((l,i)=>{e=0.9*e+0.1*l;const x=X(i),y=Y(Math.min(e,ymax));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+    const Lc=H[H.length-1];
+    ctx.fillStyle="#9fe8dd";ctx.fillText("loss "+Lc.toFixed(3)+" nats ≈ "+Math.exp(Lc).toFixed(1)+" effective choices  (step "+STATE.model.step+")",padL+6,padT+12);
+    ctx.fillStyle="rgba(95,210,194,.35)";ctx.fillRect(padL+6,padT+20,14,2);
+    ctx.fillStyle="#9aa6bb";ctx.fillText("raw per-batch loss (noisy: each batch is a random draw)",padL+24,padT+24);
+    ctx.fillStyle="#5fd2c2";ctx.fillRect(padL+6,padT+32,14,3);
+    ctx.fillStyle="#9aa6bb";ctx.fillText("moving average (the trend)",padL+24,padT+37);
+  } else {
+    ctx.fillStyle="#9aa6bb";ctx.fillText("press ▶ train (or hit space)",padL+8,padT+16);
+  }
+}
+let pcaPrev=null, pcaAlignedPrev=null;
+/* optimal orthogonal alignment (Kabsch with reflections allowed) */
+function polar2(H){
+  const S00=H[0][0]*H[0][0]+H[1][0]*H[1][0];
+  const S01=H[0][0]*H[0][1]+H[1][0]*H[1][1];
+  const S11=H[0][1]*H[0][1]+H[1][1]*H[1][1];
+  const tr=S00+S11, det=S00*S11-S01*S01;
+  const disc=Math.sqrt(Math.max(0,tr*tr/4-det));
+  const l1=tr/2+disc, l2=tr/2-disc;
+  if(l2<=1e-12*Math.max(l1,1e-12))return null;
+  let v1=[S01,l1-S00];
+  if(Math.hypot(v1[0],v1[1])<1e-12)v1=[1,0];
+  const n1=Math.hypot(v1[0],v1[1]);v1=[v1[0]/n1,v1[1]/n1];
+  const v2=[-v1[1],v1[0]];
+  const a=1/Math.sqrt(l1), b=1/Math.sqrt(l2);
+  const I00=a*v1[0]*v1[0]+b*v2[0]*v2[0], I01=a*v1[0]*v1[1]+b*v2[0]*v2[1], I11=a*v1[1]*v1[1]+b*v2[1]*v2[1];
+  return [[H[0][0]*I00+H[0][1]*I01, H[0][0]*I01+H[0][1]*I11],
+          [H[1][0]*I00+H[1][1]*I01, H[1][0]*I01+H[1][1]*I11]];
+}
+function pca2(E){
+  const n=E.length,d=E[0].length;
+  const mean=new Float64Array(d);
+  for(const r of E)for(let i=0;i<d;i++)mean[i]+=r[i]/n;
+  const C=E.map(r=>{const o=new Float64Array(d);for(let i=0;i<d;i++)o[i]=r[i]-mean[i];return o;});
+  function top(deflate,init){
+    let v=init?Float64Array.from(init):(()=>{const r=mulberry32(5);const o=new Float64Array(d);for(let i=0;i<d;i++)o[i]=randn(r);return o;})();
+    for(let it=0;it<40;it++){
+      const u=C.map(x=>{let s=0;for(let i=0;i<d;i++)s+=x[i]*v[i];return s;});
+      const w=new Float64Array(d);
+      for(let a2=0;a2<n;a2++)for(let i=0;i<d;i++)w[i]+=C[a2][i]*u[a2];
+      if(deflate){let dd=0;for(let i=0;i<d;i++)dd+=w[i]*deflate[i];for(let i=0;i<d;i++)w[i]-=dd*deflate[i];}
+      let nrm=Math.hypot(...w)||1;for(let i=0;i<d;i++)v[i]=w[i]/nrm;
+    }
+    return v;
+  }
+  const v1=top(null,pcaPrev&&pcaPrev[0]),v2=top(v1,pcaPrev&&pcaPrev[1]);
+  if(pcaPrev){
+    const al=(a,b)=>{let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;};
+    if(al(v1,pcaPrev[0])<0)for(let i=0;i<d;i++)v1[i]*=-1;
+    if(al(v2,pcaPrev[1])<0)for(let i=0;i<d;i++)v2[i]*=-1;
+  }
+  pcaPrev=[v1,v2];
+  const projRaw=r=>{let a=0,b=0;for(let i=0;i<d;i++){a+=(r[i]-mean[i])*v1[i];b+=(r[i]-mean[i])*v2[i];}return [a,b];};
+  let P=E.map(projRaw);
+  /* Procrustes: rotate/reflect this frame's projection to best match last frame's */
+  let R=null;
+  if(pcaAlignedPrev&&pcaAlignedPrev.length===P.length){
+    const H=[[0,0],[0,0]];
+    for(let i2=0;i2<P.length;i2++){
+      H[0][0]+=P[i2][0]*pcaAlignedPrev[i2][0];H[0][1]+=P[i2][0]*pcaAlignedPrev[i2][1];
+      H[1][0]+=P[i2][1]*pcaAlignedPrev[i2][0];H[1][1]+=P[i2][1]*pcaAlignedPrev[i2][1];
+    }
+    R=polar2(H);
+    if(R)P=P.map(p=>[p[0]*R[0][0]+p[1]*R[1][0], p[0]*R[0][1]+p[1]*R[1][1]]);
+  }
+  pcaAlignedPrev=P.map(p=>p.slice());
+  const projOne=r=>{const p=projRaw(r);return R?[p[0]*R[0][0]+p[1]*R[1][0], p[0]*R[0][1]+p[1]*R[1][1]]:p;};
+  return {proj:P,projOne};
+}
+function renderPCA(){
+  const cv=document.getElementById("pcaCv");
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const {proj,projOne}=pca2(STATE.model.E);
+  let mxRaw=0.4;proj.forEach(p=>{mxRaw=Math.max(mxRaw,Math.abs(p[0]),Math.abs(p[1]));});
+  STATE.pcaScale=STATE.pcaScale==null?mxRaw:Math.max(0.94*STATE.pcaScale+0.06*mxRaw,mxRaw);
+  const mx=STATE.pcaScale;
+  const P=p=>[w/2+p[0]/mx*(w/2-44), h/2-p[1]/mx*(h/2-26)];
+  STATE.embTrail.forEach((snap,si)=>{
+    const alpha=0.05+0.3*(si/STATE.embTrail.length);
+    for(let v=0;v<VOCAB.length;v++){
+      const pp=P(projOne(snap[v]));
+      ctx.fillStyle=CATA(VOCAB[v],alpha);
+      ctx.beginPath();ctx.arc(pp[0],pp[1],2,0,7);ctx.fill();
+    }
+  });
+  const hullOf=(words,fill,stroke)=>{
+    const pts=words.map(wd=>P(proj[TOK.get(wd)]));
+    const cx2=pts.reduce((s,p)=>s+p[0],0)/pts.length, cy2=pts.reduce((s,p)=>s+p[1],0)/pts.length;
+    const ord=pts.slice().sort((a,b)=>Math.atan2(a[1]-cy2,a[0]-cx2)-Math.atan2(b[1]-cy2,b[0]-cx2));
+    ctx.beginPath();
+    ord.forEach((p,i)=>{const ex=cx2+(p[0]-cx2)*1.25, ey=cy2+(p[1]-cy2)*1.25; i?ctx.lineTo(ex,ey):ctx.moveTo(ex,ey);});
+    ctx.closePath();
+    ctx.fillStyle=fill;ctx.fill();
+    ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);
+  };
+  hullOf(ANIMALS,"rgba(95,210,194,.07)","rgba(95,210,194,.35)");
+  hullOf(Object.values(SOUNDS),"rgba(232,176,75,.07)","rgba(232,176,75,.35)");
+  for(let v=0;v<VOCAB.length;v++){
+    const pp=P(proj[v]);
+    ctx.fillStyle=CAT(VOCAB[v]);
+    ctx.beginPath();ctx.arc(pp[0],pp[1],5,0,7);ctx.fill();
+    ctx.fillStyle="#e3eaf6";ctx.font="12px "+getComputedStyle(document.body).fontFamily;
+    ctx.fillText(VOCAB[v],pp[0]+8,pp[1]+4);
+  }
+  ctx.fillStyle="#9aa6bb";ctx.font="10.5px monospace";
+  ctx.fillText("live PCA of W_E ("+VOCAB.length+"×16): 2-D shadow, distances approximate",10,h-8);
+}
+function renderAttn(){
+  const cv=document.getElementById("attnCv");
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const seq=seqOf(PROBE);
+  const c=STATE.model.forward(seq);
+  const n=seq.length,labw=56,labh=20;
+  const cw=(w-labw)/n,ch=(h-labh)/n;
+  ctx.font="11px "+getComputedStyle(document.body).fontFamily;
+  for(let i=0;i<n;i++){
+    ctx.fillStyle=i===3?"#f3d9e4":"#9aa6bb";ctx.textAlign="right";ctx.fillText(PROBE[i],labw-5,labh+i*ch+ch/2+4);
+    ctx.textAlign="center";ctx.fillStyle="#9aa6bb";ctx.fillText(PROBE[i],labw+i*cw+cw/2,13);
+    for(let j=0;j<n;j++){
+      const x0=labw+j*cw,y0=labh+i*ch;
+      if(j>i){ctx.fillStyle="rgba(255,255,255,.03)";ctx.fillRect(x0,y0,cw-1,ch-1);continue;}
+      const a=c.A[i][j];
+      ctx.fillStyle=`rgba(217,138,168,${0.05+0.95*a})`;
+      ctx.fillRect(x0,y0,cw-1,ch-1);
+      if(a>0.25){ctx.fillStyle=a>0.55?"#fff":"#f3d9e4";ctx.fillText(a.toFixed(2),x0+cw/2,y0+ch/2+4);}
+    }
+  }
+  ctx.strokeStyle="rgba(217,138,168,.9)";ctx.lineWidth=1.6;
+  ctx.strokeRect(labw,labh+3*ch,cw*n,ch);
+  ctx.textAlign="left";
+}
+function renderProb(){
+  const cv=document.getElementById("probCv");
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const H=STATE.probHist;
+  ctx.strokeStyle="rgba(255,255,255,.07)";ctx.strokeRect(0,0,w,h);
+  /* y gridlines at 0, .5, 1 */
+  ctx.fillStyle="#586173";ctx.font="10px monospace";
+  for(const yv of [0,0.5,1]){
+    const y=h-8-yv*(h-22);
+    ctx.strokeStyle="rgba(255,255,255,.05)";ctx.beginPath();ctx.moveTo(34,y);ctx.lineTo(w-6,y);ctx.stroke();
+    ctx.fillText(yv.toFixed(1),8,y+3);
+  }
+  if(H.length>1){
+    ctx.strokeStyle="#62d98a";ctx.lineWidth=1.8;ctx.beginPath();
+    H.forEach((p,i)=>{const x=34+i/(H.length-1)*(w-42),y=h-8-p*(h-22);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.stroke();
+  }
+  ctx.fillStyle="#8fe9ad";ctx.font="10.5px monospace";
+  ctx.fillText("p(meow | the small cat says) = "+(H.length?H[H.length-1].toFixed(3):"—"),40,15);
+}
+
+/* parameter strip (microscope extra) */
+const PDEFS=[["E","W_E 16×16"],["P","W_pos 8×16"],["Wq","W_Q 16×8"],["Wk","W_K 16×8"],["Wv","W_V 16×8"],["Wo","W_O 8×16"],["Wu","W_U 16×16"]];
+const pCanvases={};
+(function buildStrip(){
+  const strip=document.getElementById("pstrip");
+  for(const [p,label] of PDEFS){
+    const cell=document.createElement("div");cell.className="pcell";cell.id="pc_"+p;
+    const cv=document.createElement("canvas");
+    cell.appendChild(cv);
+    const pl=document.createElement("div");pl.className="pl";pl.textContent=label;cell.appendChild(pl);
+    strip.appendChild(cell);
+    pCanvases[p]=cv;
+    cv.addEventListener("click",e=>{
+      const M=STATE.model[p];
+      const r=cv.getBoundingClientRect();
+      const j=Math.min(M[0].length-1,Math.floor((e.clientX-r.left)/r.width*M[0].length));
+      const i=Math.min(M.length-1,Math.floor((e.clientY-r.top)/r.height*M.length));
+      STATE.watch={p,i,j};
+      renderWatch();markWatched();renderStrip();
+    });
+  }
+  markWatched();
+})();
+function markWatched(){
+  for(const [p] of PDEFS)document.getElementById("pc_"+p).classList.toggle("watched",STATE.watch.p===p);
+}
+function renderStrip(){
+  for(const [p] of PDEFS){
+    const M=STATE.model[p],cv=pCanvases[p];
+    const r=M.length,c=M[0].length;
+    const px=6;
+    cv.width=c*px;cv.height=r*px;cv.style.width=(c*px)+"px";cv.style.height=(r*px)+"px";
+    const ctx=cv.getContext("2d");
+    for(let i=0;i<r;i++)for(let j=0;j<c;j++){
+      ctx.fillStyle=divergeColor(M[i][j],1.2);
+      ctx.fillRect(j*px,i*px,px,px);
+    }
+    if(STATE.watch.p===p){
+      ctx.strokeStyle="#fff";ctx.lineWidth=1.5;
+      ctx.strokeRect(STATE.watch.j*px+0.5,STATE.watch.i*px+0.5,px-1,px-1);
+    }
+  }
+}
+
+/* training controls */
+const playBtn=document.getElementById("playBtn");
+function setPlaying(v){
+  STATE.playing=v;
+  playBtn.textContent=v?"❚❚ pause":"▶ train";
+  playBtn.classList.toggle("on",v);
+  const rs=document.getElementById("runState");
+  rs.textContent=v?"· training":"· paused";
+  rs.classList.toggle("on",v);
+}
+playBtn.onclick=()=>setPlaying(!STATE.playing);
+document.getElementById("step1").onclick=()=>{trainSteps(1);renderActive();};
+document.getElementById("step25").onclick=()=>{trainSteps(25);renderActive();};
+document.getElementById("resetBtn").onclick=()=>{setPlaying(false);resetModel(true);};
+const oA=document.getElementById("optAdam"),oS=document.getElementById("optSgd");
+oA.onclick=()=>{STATE.optimizer="adam";oA.classList.add("on");oS.classList.remove("on");updateLR();};
+oS.onclick=()=>{STATE.optimizer="sgd";oS.classList.add("on");oA.classList.remove("on");updateLR();};
+const lrS=document.getElementById("lrSlider");
+function updateLR(){STATE.lrIdx=+lrS.value;setText("lrVal",curLR().toPrecision(2));}
+lrS.oninput=updateLR;
+
+/* =======================================================================
+   EXTRA 1 — one update under the microscope
+======================================================================= */
+katexInto(document.getElementById("bpMath1"),
+  "\\frac{\\partial L}{\\partial \\text{logit}_v}=p_v-\\mathbb{1}[v=\\text{target}]\\quad\\text{(softmax + cross-entropy)}",true);
+katexInto(document.getElementById("bpMath2"),
+  "\\frac{\\partial L}{\\partial W^U_{dv}}=\\underbrace{h_d}_{\\text{what it saw}}\\cdot\\underbrace{(p_v-\\mathbb{1}[v=\\text{target}])}_{\\text{blame from above}}",true);
+function renderBP(){
+  const cv=document.getElementById("bpCv");
+  const {w,h,ctx}=fitCanvas(cv);ctx.clearRect(0,0,w,h);
+  ctx.fillStyle=PANEL;ctx.fillRect(0,0,w,h);
+  const seq=seqOf(PROBE);
+  const res=STATE.model.lossAndGrad(seq,true);
+  const gn=res.cache.gradNorms;
+  const names=Object.keys(gn);
+  const mx=Math.max(...Object.values(gn))||1;
+  const bh=(h-16)/names.length;
+  ctx.font="11px monospace";
+  names.forEach((nm,i)=>{
+    const y=8+i*bh;
+    ctx.fillStyle="#9aa6bb";ctx.textAlign="right";ctx.fillText(nm,108,y+bh/2+3);
+    const bw=(w-160)*(gn[nm]/mx);
+    const grad=ctx.createLinearGradient(116,0,116+bw,0);
+    grad.addColorStop(0,"#d98aa8");grad.addColorStop(1,"#8ea0e8");
+    ctx.fillStyle=grad;
+    ctx.fillRect(116,y+3,Math.max(2,bw),bh-7);
+    ctx.fillStyle="#c3cdde";ctx.textAlign="left";
+    ctx.fillText(gn[nm].toExponential(1),122+Math.max(2,bw),y+bh/2+3);
+  });
+  ctx.fillStyle="#9aa6bb";
+  ctx.fillText("example: \""+PROBE.join(" ")+"\" · loss "+res.loss.toFixed(3),10,h-4);
+}
+function renderWatch(){
+  const {p,i,j}=STATE.watch;
+  const M=STATE.model[p];
+  const ii=Math.min(i,M.length-1),jj=Math.min(j,M[0].length-1);
+  const names={E:"W_E",P:"W_pos",Wq:"W_Q",Wk:"W_K",Wv:"W_V",Wo:"W_O",Wu:"W_U"};
+  let role="";
+  if(p==="E")role=`row ${ii} = the embedding of “${VOCAB[ii]}”, component ${jj}`;
+  else if(p==="P")role=`row ${ii} = the embedding of position ${ii}, component ${jj}`;
+  else if(p==="Wu")role=`column ${jj} = the output direction for “${VOCAB[jj]}” (reading dim ${ii})`;
+  else if(p==="Wq")role=`column ${jj} of the query lens (session 2): reads embedding dim ${ii}`;
+  else if(p==="Wk")role=`column ${jj} of the key lens (session 2): reads embedding dim ${ii}`;
+  else if(p==="Wv")role=`what gets carried when attended (dim ${ii}→${jj})`;
+  else role=`writes the head's output back to the stream (dim ${ii}→${jj})`;
+  document.getElementById("wName").innerHTML=`${names[p].replace("_"," ")}[${ii},${jj}]`;
+  setText("wRole",role);
+  const batch=STATE.corpusSeqs.slice(0,8);
+  const {grads}=STATE.model.batchLossAndGrad(batch);
+  const wv=M[ii][jj],g=grads[p][ii][jj],eta=curLR();
+  katexInto(document.getElementById("wEq"),
+    STATE.optimizer==="sgd"
+    ?`w=${wv.toFixed(4)},\\;\\; \\frac{\\partial L}{\\partial w}=${g.toFixed(4)} \\;\\Rightarrow\\; w' = ${wv.toFixed(4)} - ${eta.toFixed(2)}\\times${g.toFixed(4)} = ${(wv-eta*g).toFixed(4)}`
+    :`w=${wv.toFixed(4)},\\;\\; \\frac{\\partial L}{\\partial w}=${g.toFixed(4)} \\;\\Rightarrow\\; w' = w - \\eta\\,\\tfrac{\\hat m}{\\sqrt{\\hat v}+\\varepsilon}\\;\\;\\text{(Adam: rescaled, same sign logic)}`,false);
+  STATE._watchGrads=grads;
+}
+document.getElementById("wStep").onclick=()=>{
+  if(!STATE._watchGrads)renderWatch();
+  const g=STATE._watchGrads;
+  if(STATE.optimizer==="adam")STATE.model.applyAdam(g,curLR());else STATE.model.applySGD(g,curLR());
+  STATE.lossHist.push(STATE.model.batchLossAndGrad(STATE.corpusSeqs.slice(0,8)).loss);
+  const c=STATE.model.forward(seqOf(PROBE));STATE.probHist.push(c.probs[3][TOK.get("meow")]);
+  STATE._watchGrads=null;
+  setText("wHist","applied; every other weight moved too, since the rule updates all of them at once.");
+  renderActive();
+};
+
+/* =======================================================================
+   EXTRA 2 — held-out generation
+======================================================================= */
+(function(){
+  const sel=document.getElementById("genSel");
+  TESTS.forEach((t,i)=>{const o=document.createElement("option");o.value=i;o.textContent=t.join(" ")+" …";sel.appendChild(o);});
+  const corpusStarts=[["the","cat","says"],["the","hungry","cow","says"]];
+  corpusStarts.forEach((t,i)=>{const o=document.createElement("option");o.value=100+i;o.textContent=t.join(" ")+" … (in corpus)";sel.appendChild(o);});
+  function promptOf(){const v=+sel.value;return v>=100?corpusStarts[v-100]:TESTS[v];}
+  function held(){return +sel.value<100;}
+  document.getElementById("genBtn").onclick=run;
+  sel.onchange=()=>{setText("genHeld",held()?"(this exact sentence was removed from the corpus before training)":"");};
+  sel.onchange();
+  function run(){
+    const ws=promptOf().slice();
+    const firstDist=STATE.model.forward(seqOf(ws)).probs[ws.length-1];
+    const gen=[];
+    for(let s=0;s<2;s++){
+      const c=STATE.model.forward(seqOf(ws));
+      const pr=c.probs[ws.length-1];
+      let bi=0;for(let v=0;v<pr.length;v++)if(pr[v]>pr[bi])bi=v;
+      ws.push(VOCAB[bi]);gen.push(VOCAB[bi]);
+      if(VOCAB[bi]===".")break;
+    }
+    const an=promptOf()[promptOf().length-2];
+    const correct=SOUNDS[an];
+    const ok=gen[0]===correct;
+    document.getElementById("genOut").innerHTML=
+      promptOf().join(" ")+" <span class='new'>"+gen.join(" ")+"</span> &nbsp; "+
+      (STATE.model.step===0?"<span class='note'>(untrained: noise)</span>":
+       ok?"<span style='color:var(--good)'>✓ correct ("+correct+")</span>":"<span style='color:var(--bad)'>✗ expected "+correct+"</span>");
+    const bars=document.getElementById("genBars");bars.innerHTML="";
+    const pm=Math.max(...firstDist);
+    for(let v=0;v<VOCAB.length;v++){
+      const b=document.createElement("div");b.className="b";
+      b.style.height=Math.max(1,firstDist[v]/Math.max(pm,1e-9)*100)+"%";
+      b.style.background=VOCAB[v]===correct?"var(--good)":"#2b3550";
+      b.title=VOCAB[v]+": "+firstDist[v].toFixed(3);
+      const l=document.createElement("div");l.className="bl";l.textContent=VOCAB[v];
+      if(VOCAB[v]===correct)l.style.color="var(--good)";
+      b.appendChild(l);bars.appendChild(b);
+    }
+  }
+})();
+
+/* =======================================================================
+   DECK — stages, keys, chrome
+======================================================================= */
+const stages=[...document.querySelectorAll(".stage")];
+const MAIN=stages.findIndex(s=>s.id==="st-micro"); /* screens before this are the main deck; the rest are extras */
+let cur=0;
+function go(i){
+  i=Math.max(0,Math.min(stages.length-1,i));
+  if(i===cur){renderActive();return;}
+  stages[cur].classList.remove("active");
+  cur=i;
+  stages[cur].classList.add("active");
+  document.getElementById("progress").style.width=(Math.min(cur,MAIN-1)/(MAIN-1)*100)+"%";
+  setText("counter",cur<MAIN?(cur+1)+" / "+MAIN:"extra "+(cur-MAIN+1)+" / "+(stages.length-MAIN));
+  setTimeout(renderActive,60);
+}
+window.addEventListener("keydown",e=>{
+  if(e.target.tagName==="SELECT"||e.target.tagName==="INPUT")return;
+  /* → stops at the last main screen; the extras are reached with 8 / 9 / 0 only */
+  if(e.key==="ArrowRight"||e.key==="PageDown"){e.preventDefault();if(cur!==MAIN-1)go(cur+1);}
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();go(cur-1);}
+  else if(e.key==="Home"){e.preventDefault();go(0);}
+  else if(e.key==="End"){e.preventDefault();go(MAIN-1);}
+  else if(e.code==="Space"){e.preventDefault();setPlaying(!STATE.playing);}
+  else if(/^[0-9]$/.test(e.key)){go(e.key==="0"?9:+e.key-1);}
+});
+
+function updateChrome(){setText("stepCounter","step "+STATE.model.step);}
+function renderTrain(){renderLoss();renderPCA();renderAttn();renderProb();}
+function renderMicro(){renderStrip();renderBP();renderWatch();}
+function renderActive(){
+  const id=stages[cur].id;
+  if(id==="st-flow")renderFlow();
+  else if(id==="st-anatomy")renderAnatomy();
+  else if(id==="st-predict")predictA.render();
+  else if(id==="st-train")renderTrain();
+  else if(id==="st-predict2")predictB.render();
+  else if(id==="st-micro")renderMicro();
+  updateChrome();
+}
+function renderAll(){renderFlow();renderAnatomy();predictA.render();predictB.render();renderTrain();renderMicro();updateChrome();}
+
+/* training loop — keeps running across screens so every panel stays live */
+function loop(){
+  if(STATE.playing){
+    trainSteps(2);
+    if(!STATE.converged&&STATE.convCount>=100){
+      STATE.converged=true;
+      setPlaying(false);
+      const cb=document.getElementById("convBanner");
+      cb.innerHTML=`✓ <b>Converged at step ${STATE.model.step}.</b> The loss has reached the corpus's irreducible-entropy floor and the probe is mastered; the remaining loss equals the language's genuine uncertainty. Train on anyway (nothing more to gain), or ↺ reset for a fresh seed.`;
+      cb.style.display="block";
+    }
+    renderActive();
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- boot ---------- */
+const predictA=makePredict("predictA"), predictB=makePredict("predictB");
+renderFlowEq();
+resetModel(false);
+updateLR();
+setText("counter","1 / "+MAIN);
+window.addEventListener("resize",()=>setTimeout(renderAll,80));
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>renderAll());
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

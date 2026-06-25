@@ -7,7 +7,7 @@
 
 # Obsidian vault config
 .obsidian/
-
+tmp/
 # Editor / OS noise
 .vscode/
 .idea/
@@ -23,3 +23,7 @@ node_modules/
 # but never the raw multi-hundred-MB screen capture or temp frame dumps.
 session-1/assets/*.mov
 **/_frames/
+
+# Python cache
+__pycache__/
+*.pyc

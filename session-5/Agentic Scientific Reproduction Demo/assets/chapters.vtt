@@ -1,0 +1,43 @@
+WEBVTT
+
+00:00.000 --> 00:23.000
+User prompt as executable specification: UV, git, TDD, commits, and Hypothesis.
+
+00:23.000 --> 00:30.000
+Environment and audit trail: git init, uv init, dependencies, first commits.
+
+00:30.000 --> 00:34.000
+The κ-Köhler equation becomes a test target.
+
+00:34.000 --> 00:46.000
+First RED state: ImportError because the public module does not exist yet.
+
+00:46.000 --> 02:02.000
+TDD continues: constants, critical supersaturation, properties, and figure generation.
+
+02:02.000 --> 02:12.000
+Figure extraction prompt: render the PDF and isolate Figure 1.
+
+02:12.000 --> 02:25.000
+Environment bug: system python unavailable; use uv run python instead.
+
+02:25.000 --> 02:47.000
+Digitizing by thresholding and log-axis calibration.
+
+02:47.000 --> 03:17.000
+Digitized points become CSV regression tests.
+
+03:17.000 --> 03:30.000
+Overlay request: put digitized paper points on the generated curves.
+
+03:30.000 --> 03:48.000
+Overlay API bug: unexpected keyword argument drives an interface change.
+
+03:48.000 --> 03:58.000
+Final overlay validation: eleven tests pass.
+
+03:58.000 --> 04:49.000
+Style pass: make the graph prettier while preserving validation.
+
+04:49.000 --> 05:00.000
+Scientific reproduction complete: figure, tests, data, and audit trail.

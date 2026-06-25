@@ -1,0 +1,28 @@
+kappa,critical_supersaturation_percent,dry_diameter_um_digitized,x_pixel,y_pixel,notes
+1.0,1.0,0.0240,324.0,219,black curve crossing
+0.1,1.0,0.0510,460.5,219,black curve crossing
+0.01,1.0,0.1000,582.5,219,black curve crossing
+0.001,1.0,0.1550,662.0,219,black curve crossing
+0.0,1.0,0.2117,718.5,219,black Kelvin curve crossing
+1.0,0.7,0.0305,367.0,284,black curve crossing
+0.1,0.7,0.0650,504.5,284,black curve crossing
+0.01,0.7,0.1296,629.5,284,black curve crossing
+0.001,0.7,0.2105,717.5,284,black curve crossing
+0.0,0.7,0.3022,783.0,284,black Kelvin curve crossing
+1.0,0.5,0.0380,407.0,345,black curve crossing
+0.1,0.5,0.0813,545.0,345,black curve crossing
+0.01,0.5,0.1652,673.5,345,black curve crossing
+0.001,0.5,0.2789,768.5,345,black curve crossing
+0.0,0.5,0.4207,843.0,345,black Kelvin curve crossing
+1.0,0.3,0.0536,469.5,439,black curve crossing
+0.1,0.3,0.1151,608.0,439,black curve crossing
+0.01,0.3,0.2390,740.5,439,black curve crossing
+0.001,0.3,0.4242,844.5,439,black curve crossing
+0.0,0.3,0.7045,936.5,439,black Kelvin curve crossing
+1.0,0.2,0.0703,518.5,513,black curve crossing
+0.1,0.2,0.1508,657.0,513,black curve crossing
+0.01,0.2,0.3167,791.5,513,black curve crossing
+0.001,0.2,0.5873,903.5,513,black curve crossing
+1.0,0.1,0.1114,602.0,639,black curve crossing
+0.1,0.1,0.2390,740.5,639,black curve crossing
+0.01,0.1,0.5088,877.5,639,black curve crossing
